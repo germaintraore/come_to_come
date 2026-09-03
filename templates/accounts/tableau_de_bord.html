@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Espace – Come To Code{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner mb-5">
+            <div class="welcome-bg-shapes">
+                <div class="wb-shape wb-shape-1"></div>
+                <div class="wb-shape wb-shape-2"></div>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="welcome-greeting">Bienvenue sur ton espace 👋</div>
+                    <h1 class="welcome-name">{{ apprenant.nom_complet }} </h1>
+                    <p class="welcome-name"> <a href="{% url 'liste_devoirs' %}">Voir mes devoirs</a> </p>
+                    <p class="welcome-message">
+                        Tu fais maintenant partie de la famille <strong>Come To Code</strong>.
+                        Ton voyage vers la maîtrise de la programmation commence ici.
+                        <span class="text-warning">Chaque ligne de code que tu écriras te rapprochera de tes
+                            rêves.</span>
+                    </p>
+                </div>
+                <div class="col-md-4 text-center d-none d-md-block">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-person-badge-fill"></i>
+                        <div class="avatar-status">
+                            <i class="bi bi-circle-fill text-success me-1" style="font-size:.6rem;"></i>
+                            En ligne
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile & Info Cards -->
+        <div class="row g-4 mb-5">
+
+            <!-- Profil Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-icon bg-primary-soft">
+                        <i class="bi bi-person-circle text-primary"></i>
+                    </div>
+                    <h5 class="dash-card-title">Mon Profil</h5>
+                    <div class="dash-info-list">
+                        <div class="dash-info-item">
+                            <span class="dash-info-label"><i class="bi bi-person me-2"></i>Prénom</span>
+                            <span class="dash-info-value">{{ apprenant.prenom }}</span>
+                        </div>
+                        <div class="dash-info-item">
+                            <span class="dash-info-label"><i class="bi bi-person-fill me-2"></i>Nom</span>
+                            <span class="dash-info-value">{{ apprenant.nom }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-icon bg-success-soft">
+                        <i class="bi bi-whatsapp text-success"></i>
+                    </div>
+                    <h5 class="dash-card-title">Contact</h5>
+                    <div class="dash-info-list">
+                        <div class="dash-info-item">
+                            <span class="dash-info-label"><i class="bi bi-telephone me-2"></i>WhatsApp</span>
+                            <span class="dash-info-value">{{ apprenant.whatsapp }}</span>
+                        </div>
+                        <div class="dash-info-item">
+                            <span class="dash-info-label"><i class="bi bi-shield-check me-2"></i>Identifiant</span>
+                            <span class="dash-info-value">
+                                <span class="badge bg-success-soft text-success">Vérifié</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inscription Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-icon bg-warning-soft">
+                        <i class="bi bi-calendar-check text-warning"></i>
+                    </div>
+                    <h5 class="dash-card-title">Inscription</h5>
+                    <div class="dash-info-list">
+                        <div class="dash-info-item">
+                            <span class="dash-info-label"><i class="bi bi-calendar me-2"></i>Date</span>
+                            <span class="dash-info-value">{{ apprenant.date_inscription|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="dash-info-item">
+                            <span class="dash-info-label"><i class="bi bi-clock me-2"></i>Heure</span>
+                            <span class="dash-info-value">{{ apprenant.date_inscription|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status & Motivation -->
+        <div class="row g-4">
+            <!-- Status Card -->
+            <div class="col-lg-5">
+                <div class="dash-card h-100">
+                    <h5 class="dash-card-title mb-4">
+                        <i class="bi bi-activity me-2 text-primary"></i>Statut du compte
+                    </h5>
+                    <div class="status-list">
+                        <div class="status-item">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            <span>Compte actif</span>
+                        </div>
+                        <div class="status-item">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            <span>Identité vérifiée</span>
+                        </div>
+                        <div class="status-item">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            <span>Session sécurisée</span>
+                        </div>
+                        <div class="status-item">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            <span>Accès complet à la plateforme</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quote Card -->
+            <div class="col-lg-7">
+                <div class="dash-card dash-card-quote h-100">
+                    <div class="quote-decoration">
+                        <i class="bi bi-quote"></i>
+                    </div>
+                    <p class="quote-text">
+                        "Tout le monde devrait apprendre à programmer un ordinateur, parce que ça t'apprend à penser."
+                    </p>
+                    <div class="quote-author">— Steve Jobs, Co-fondateur d'Apple</div>
+                    <div class="quote-cta mt-4">
+                        <a href="{% url 'accueil' %}" class="btn ctc-btn-primary">
+                            <i class="bi bi-book me-2"></i>Découvrir les ressources
+                        </a>
+                        <a href="{% url 'deconnexion' %}" class="btn ctc-btn-outline ms-2">
+                            <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

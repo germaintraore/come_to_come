@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Accueil – Come To Code{% endblock %}
+
+{% block content %}
+
+<!-- ===== HERO SECTION ===== -->
+<section class="ctc-hero">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+    <div class="container">
+        <div class="row align-items-center min-vh-85 py-5">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="hero-badge mb-4">
+                    <i class="bi bi-stars me-2"></i>Plateforme pédagogique 2025
+                </div>
+                <h1 class="hero-title mb-4">
+                    Apprends à
+                    <span class="hero-highlight">coder</span>
+                    et change ton avenir
+                </h1>
+                <p class="hero-subtitle mb-5">
+                    Rejoins des milliers d'apprenants qui transforment leur passion pour la technologie
+                    en compétences réelles. La programmation, c'est le langage du futur — maîtrise-le dès aujourd'hui.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'inscription' %}" class="btn ctc-btn-hero">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Commencer gratuitement
+                    </a>
+                    <a href="{% url 'connexion' %}" class="btn ctc-btn-hero-outline">
+                        <i class="bi bi-person-check me-2"></i>J'ai déjà un compte
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="hero-stats mt-5">
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Gratuit</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <span class="stat-label">Possibilités</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number">0</span>
+                        <span class="stat-label">Prérequis</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Animation Panel -->
+            <div class="col-lg-6">
+                <div class="hero-code-panel">
+                    <div class="code-panel-header">
+                        <div class="code-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span class="code-filename">Bonjour.py</span>
+                    </div>
+                    <div class="code-panel-body">
+                        <div class="code-line"><span class="kw">def</span> <span class="fn">mon_avenir</span>():</div>
+                        <div class="code-line indent"><span class="str">"""Mon voyage dans la programmation"""</span>
+                        </div>
+                        <div class="code-line indent"><span class="var">competences</span> = [</div>
+                        <div class="code-line indent2"><span class="str">"Python"</span>, <span
+                                class="str">"Django"</span>,</div>
+                        <div class="code-line indent2"><span class="str">"Web"</span>, <span class="str">"IA"</span>,
+                        </div>
+                        <div class="code-line indent">]</div>
+                        <div class="code-line">&nbsp;</div>
+                        <div class="code-line indent"><span class="kw">for</span> <span class="var">skill</span> <span
+                                class="kw">in</span> <span class="var">competences</span>:</div>
+                        <div class="code-line indent2"><span class="fn">apprendre</span>(<span class="var">skill</span>)
+                        </div>
+                        <div class="code-line indent2"><span class="fn">pratiquer</span>(<span class="var">skill</span>)
+                        </div>
+                        <div class="code-line">&nbsp;</div>
+                        <div class="code-line indent"><span class="kw">return</span> <span class="str">"🚀 Succès
+                                garanti !"</span></div>
+                        <div class="code-line">&nbsp;</div>
+                        <div class="code-line"><span class="fn">mon_avenir</span>()</div>
+                        <div class="code-output">
+                            <span class="output-arrow">&gt;&gt;&gt;</span> 🚀 Succès garanti !
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== POURQUOI CODER ===== -->
+<section class="ctc-section py-6">
+    <div class="container">
+        <div class="section-header text-center mb-5">
+            <div class="section-eyebrow">Pourquoi apprendre</div>
+            <h2 class="section-title">La programmation <span class="text-gradient">transforme</span> des vies</h2>
+            <p class="section-subtitle">
+                Dans un monde numérique, savoir coder c'est avoir le pouvoir de créer, innover et résoudre des problèmes
+                complexes.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="ctc-card h-100">
+                    <div class="ctc-card-icon bg-primary-soft">
+                        <i class="bi bi-briefcase-fill text-primary"></i>
+                    </div>
+                    <h4 class="ctc-card-title">Opportunités d'emploi</h4>
+                    <p class="ctc-card-text">
+                        Les développeurs sont parmi les professionnels les plus recherchés et les mieux rémunérés au
+                        monde. Le marché du travail numérique explose en Afrique.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="ctc-card h-100">
+                    <div class="ctc-card-icon bg-success-soft">
+                        <i class="bi bi-lightbulb-fill text-success"></i>
+                    </div>
+                    <h4 class="ctc-card-title">Résolution de problèmes</h4>
+                    <p class="ctc-card-text">
+                        La programmation développe une pensée logique et structurée applicable dans tous les domaines de
+                        la vie. Tu deviens un meilleur penseur.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="ctc-card h-100">
+                    <div class="ctc-card-icon bg-warning-soft">
+                        <i class="bi bi-globe-africa text-warning"></i>
+                    </div>
+                    <h4 class="ctc-card-title">Impact continental</h4>
+                    <p class="ctc-card-text">
+                        L'Afrique a besoin de ses propres solutions numériques. Chaque développeur africain est un
+                        bâtisseur d'un avenir technologique souverain.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="ctc-card h-100">
+                    <div class="ctc-card-icon bg-info-soft">
+                        <i class="bi bi-currency-dollar text-info"></i>
+                    </div>
+                    <h4 class="ctc-card-title">Liberté financière</h4>
+                    <p class="ctc-card-text">
+                        Freelancing, startups, applications mobiles — la programmation ouvre des sources de revenus
+                        illimitées depuis n'importe où dans le monde.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="ctc-card h-100">
+                    <div class="ctc-card-icon bg-danger-soft">
+                        <i class="bi bi-robot text-danger"></i>
+                    </div>
+                    <h4 class="ctc-card-title">Ère de l'Intelligence Artificielle</h4>
+                    <p class="ctc-card-text">
+                        L'IA révolutionne tout. Comprendre la programmation te permet de maîtriser ces technologies
+                        plutôt que d'en être victime.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="ctc-card h-100">
+                    <div class="ctc-card-icon bg-purple-soft">
+                        <i class="bi bi-people-fill text-purple"></i>
+                    </div>
+                    <h4 class="ctc-card-title">Communauté mondiale</h4>
+                    <p class="ctc-card-text">
+                        Rejoins une communauté internationale de millions de développeurs qui partagent, collaborent et
+                        construisent l'avenir ensemble.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== COMMENT ÇA MARCHE ===== -->
+<section class="ctc-section-dark py-6">
+    <div class="container">
+        <div class="section-header text-center mb-5">
+            <div class="section-eyebrow text-white-50">Démarrage rapide</div>
+            <h2 class="section-title text-white">Commence en <span class="text-gradient">3 étapes</span></h2>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-icon"><i class="bi bi-person-plus-fill"></i></div>
+                    <h5 class="text-white mt-3 mb-2">Inscris-toi</h5>
+                    <p class="text-white-50">Crée ton compte gratuitement en moins de 2 minutes avec juste ton numéro
+                        WhatsApp.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card step-card-featured">
+                    <div class="step-number">2</div>
+                    <div class="step-icon"><i class="bi bi-door-open-fill"></i></div>
+                    <h5 class="text-white mt-3 mb-2">Connecte-toi</h5>
+                    <p class="text-white-50">Accède à ton espace personnel sécurisé avec tes identifiants WhatsApp.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-icon"><i class="bi bi-laptop-fill"></i></div>
+                    <h5 class="text-white mt-3 mb-2">Apprends & Grandis</h5>
+                    <p class="text-white-50">Explore ton tableau de bord et démarre ton parcours vers l'excellence
+                        technologique.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'inscription' %}" class="btn ctc-btn-hero">
+                <i class="bi bi-rocket-takeoff me-2"></i>Je démarre maintenant
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="ctc-cta py-6">
+    <div class="container text-center">
+        <div class="cta-badge mb-3">
+            <i class="bi bi-trophy-fill me-2 text-warning"></i>Rejoins la révolution numérique africaine
+        </div>
+        <h2 class="cta-title mb-4">Prêt(e) à écrire ta première ligne de code ?</h2>
+        <p class="cta-text mb-5">
+            Des centaines d'apprenants ont déjà franchi le pas. Le meilleur moment pour commencer, c'était hier. Le
+            deuxième meilleur moment, c'est maintenant.
+        </p>
+        <a href="{% url 'inscription' %}" class="btn ctc-btn-hero btn-lg">
+            <i class="bi bi-code-slash me-2"></i>Créer mon compte gratuitement
+        </a>
+    </div>
+</section>
+
+{% endblock %}

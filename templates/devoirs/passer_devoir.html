@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Évaluation : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- En-tête du Devoir -->
+        <div class="admin-table-card p-4 mb-4 text-center">
+            <div class="d-flex justify-content-center gap-2 mb-2">
+                <span class="badge bg-primary">{{ devoir.get_formation_display }}</span>
+                <span class="badge bg-secondary">Session : {{ devoir.get_session_display }}</span>
+            </div>
+            <h2 class="text-white mb-2">{{ devoir.titre }}</h2>
+
+            {% if devoir.description %}
+            <div class="p-3 my-3 mx-auto rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 text-white-50"
+                style="max-width: 700px;">
+                <i class="bi bi-info-circle text-primary me-2"></i><strong>Consignes :</strong> {{ devoir.description }}
+            </div>
+            {% endif %}
+
+            <div class="text-white-50 small mt-2">
+                <i class="bi bi-card-checklist me-1 text-primary"></i>Total : <strong>{{ questions|length }}
+                    question(s)</strong> (1 seule tentative autorisée)
+            </div>
+        </div>
+
+        <!-- Formulaire de passage du Devoir -->
+        <form method="post" action="{% url 'soumettre_devoir' devoir.id %}">
+            {% csrf_token %}
+
+            <div class="d-flex flex-column gap-4">
+                {% for question in questions %}
+                <div class="admin-table-card p-4">
+
+                    <!-- Numéro de la question -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-3 py-2">
+                            Question {{ forloop.counter }} / {{ questions|length }}
+                        </span>
+                    </div>
+
+                    <!-- Énoncé -->
+                    <h5 class="text-white fw-bold mb-4">{{ question.texte }}</h5>
+
+                    <!-- Choix de réponses (Grille 2x2 avec sélection facile) -->
+                    <div class="row g-3">
+
+                        <!-- Option A -->
+                        <div class="col-md-6">
+                            <label
+                                class="d-flex align-items-center p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 text-white w-100 cursor-pointer user-select-none"
+                                style="cursor: pointer;" for="q_{{ question.id }}_A">
+                                <input type="radio" class="form-check-input me-3 mt-0" name="question_{{ question.id }}"
+                                    id="q_{{ question.id }}_A" value="A" required>
+                                <div>
+                                    <span class="badge bg-secondary me-2">A</span>
+                                    <span>{{ question.choix_a }}</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Option B -->
+                        <div class="col-md-6">
+                            <label
+                                class="d-flex align-items-center p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 text-white w-100 cursor-pointer user-select-none"
+                                style="cursor: pointer;" for="q_{{ question.id }}_B">
+                                <input type="radio" class="form-check-input me-3 mt-0" name="question_{{ question.id }}"
+                                    id="q_{{ question.id }}_B" value="B">
+                                <div>
+                                    <span class="badge bg-secondary me-2">B</span>
+                                    <span>{{ question.choix_b }}</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Option C -->
+                        <div class="col-md-6">
+                            <label
+                                class="d-flex align-items-center p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 text-white w-100 cursor-pointer user-select-none"
+                                style="cursor: pointer;" for="q_{{ question.id }}_C">
+                                <input type="radio" class="form-check-input me-3 mt-0" name="question_{{ question.id }}"
+                                    id="q_{{ question.id }}_C" value="C">
+                                <div>
+                                    <span class="badge bg-secondary me-2">C</span>
+                                    <span>{{ question.choix_c }}</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Option D -->
+                        <div class="col-md-6">
+                            <label
+                                class="d-flex align-items-center p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 text-white w-100 cursor-pointer user-select-none"
+                                style="cursor: pointer;" for="q_{{ question.id }}_D">
+                                <input type="radio" class="form-check-input me-3 mt-0" name="question_{{ question.id }}"
+                                    id="q_{{ question.id }}_D" value="D">
+                                <div>
+                                    <span class="badge bg-secondary me-2">D</span>
+                                    <span>{{ question.choix_d }}</span>
+                                </div>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Boutons de validation -->
+            <div class="d-flex justify-content-between align-items-center mt-5 mb-5 p-4 admin-table-card">
+                <a href="{% url 'liste_devoirs' %}" class="btn btn-secondary-ctc">
+                    <i class="bi bi-arrow-left me-1"></i>Abandonner et quitter
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg px-5"
+                    onclick="return confirm('Confirmez-vous la soumission de vos réponses ? Vous ne pourrez pas recommencer.');">
+                    <i class="bi bi-send-fill me-2"></i>Soumettre mon devoir
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+{% endblock content %}

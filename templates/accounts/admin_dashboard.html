@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Administration – Come To Code{% endblock %}
+
+{% block content %}
+
+
+<div class="dashboard-wrapper">
+  <div class="container py-5">
+
+    <!-- En-tete admin -->
+    <div class="admin-header mb-5">
+      <div class="row align-items-center">
+        <div class="col-md-7">
+          <div class="admin-badge mb-2">
+            <i class="bi bi-shield-lock-fill me-2"></i>Interface Administrateur
+          </div>
+          <h1 class="admin-title">Gestion des apprenants</h1>
+          <p class="text-white-50 mb-0">
+            Connecte : <strong class="text-white">{{ request.user.nom_complet }}</strong>
+          </p>
+        </div>
+        <div class="col-md-5 text-md-end mt-3 mt-md-0">
+          <a href="{% url 'export_excel' %}?{% if formation %}formation={{ formation }}&{% endif %}{% if session %}session={{ session }}{% endif %}"
+            class="btn btn-export me-2">
+            <i class="bi bi-file-earmark-excel me-2"></i>Telecharger Excel
+          </a>
+          <a href="{% url 'export_csv' %}?{% if formation %}formation={{ formation }}&{% endif %}{% if session %}session={{ session }}{% endif %}"
+            class="btn btn-export-outline me-2">
+            <i class="bi bi-file-earmark-spreadsheet me-2"></i>CSV
+          </a>
+          <a href="{% url 'tableau_de_bord' %}" class="btn btn-secondary-ctc">
+            <i class="bi bi-arrow-left me-1"></i>Mon espace
+          </a>
+        </div>
+        <div class="col-md-5 text-md-end mt-3 mt-md-0">
+          <a href="{% url 'creer_devoir' %}" class="btn btn-primary me-2">
+            <i class="bi bi-plus-circle me-1"></i>Créer un devoir
+          </a>
+
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau de gestion des devoirs -->
+    <div class="admin-table-card mt-5">
+      <div class="admin-table-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-white">
+          <i class="bi bi-journal-check me-2 text-primary"></i>
+          Gestion des Devoirs & QCM ({{ devoirs|length }})
+        </h5>
+        <a href="{% url 'creer_devoir' %}" class="btn btn-primary btn-sm">
+          <i class="bi bi-plus-circle me-1"></i>Nouveau Devoir
+        </a>
+      </div>
+
+      {% if devoirs %}
+      <div class="table-responsive">
+        <table class="table ctc-table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Titre du devoir</th>
+              <th>Formation</th>
+              <th>Session</th>
+              <th>Questions</th>
+              <th>Statut</th>
+              <th>Date de création</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in devoirs %}
+            <tr>
+              <td class="text-muted">{{ d.id }}</td>
+              <td class="fw-bold text-white">{{ d.titre }}</td>
+              <td>
+                <span class="badge bg-info bg-opacity-10 text-info">
+                  {{ d.get_formation_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-primary bg-opacity-10 text-primary">
+                  {{ d.get_session_display }}
+                </span>
+              </td>
+              <td>
+                {% if d.total_questions == 0 %}
+                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">
+                  <i class="bi bi-exclamation-circle me-1"></i>0 question
+                </span>
+                {% else %}
+                <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                  <i class="bi bi-check-circle me-1"></i>{{ d.total_questions }} question(s)
+                </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if d.est_actif %}
+                <span class="status-badge status-active"><i class="bi bi-circle-fill me-1"
+                    style="font-size:.5rem;"></i>Actif</span>
+                {% else %}
+                <span class="status-badge status-inactive"><i class="bi bi-circle-fill me-1"
+                    style="font-size:.5rem;"></i>Inactif</span>
+                {% endif %}
+              </td>
+              <td class="text-white-50">
+                <i class="bi bi-calendar3 me-1"></i>{{ d.date_creation|date:"d/m/Y" }}
+              </td>
+              <td class="text-center">
+                <div class="action-btns">
+                  <!-- Voir le corrigé en ligne -->
+                  <a href="{% url 'resultat_devoir' d.pk %}" class="btn-action btn-action-info"
+                    title="Voir la correction">
+                    <i class="bi bi-eye-fill"></i>
+                  </a>
+
+                  <!-- Télécharger le PDF -->
+                  <a href="{% url 'telecharger_devoir_pdf' d.pk %}" class="btn-action btn-action-primary"
+                    title="Télécharger PDF">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                  </a>
+
+                  <!-- Dupliquer / Affecter à une autre session -->
+                  <a href="{% url 'dupliquer_devoir' d.pk %}" class="btn-action btn-action-warning"
+                    title="Affecter à une autre session">
+                    <i class="bi bi-copy"></i>
+                  </a>
+
+                  <!-- Gérer les questions -->
+                  <a href="{% url 'gerer_devoir' d.pk %}" class="btn-action btn-action-success"
+                    title="Gérer les questions">
+                    <i class="bi bi-gear-fill"></i>
+                  </a>
+
+                  <!-- Supprimer le devoir -->
+                  <a href="{% url 'supprimer_devoir' d.pk %}" class="btn-action btn-action-danger"
+                    onclick="return confirm('Supprimer ce devoir et toutes ses questions ?');" title="Supprimer">
+                    <i class="bi bi-trash3-fill"></i>
+                  </a>
+                </div>
+              </td>
+
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state p-4 text-center">
+        <i class="bi bi-journal-x display-4 text-white-50"></i>
+        <p class="text-white-50 mt-3 mb-0">Aucun devoir créé pour l'instant.</p>
+        <a href="{% url 'creer_devoir' %}" class="btn btn-primary mt-3">Créer le premier devoir</a>
+      </div>
+      {% endif %}
+    </div>
+
+
+
+
+    <!-- Cartes statistiques -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="stat-card stat-total">
+          <div class="stat-card-icon"><i class="bi bi-people-fill"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-number">{{ total }}</div>
+            <div class="stat-card-label">Total apprenants</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card stat-active">
+          <div class="stat-card-icon"><i class="bi bi-person-check-fill"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-number">{{ actifs }}</div>
+            <div class="stat-card-label">Comptes actifs</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card stat-inactive">
+          <div class="stat-card-icon"><i class="bi bi-person-x-fill"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-number">{{ inactifs }}</div>
+            <div class="stat-card-label">Comptes inactifs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <div class="admin-search-bar mb-4">
+      <form method="get" class="row g-2 align-items-end">
+        <!-- Recherche -->
+        <div class="col-md-4">
+          <label class="text-white-50 small mb-1">Recherche</label>
+          <div class="search-input-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="q" value="{{ search }}" placeholder="Nom, prenom ou WhatsApp..."
+              class="form-control search-input">
+          </div>
+        </div>
+        <!-- Type de formation -->
+        <div class="col-md-3">
+          <label class="text-white-50 small mb-1">Type de formation</label>
+
+          {{ filtre_form.fields.formation}}
+        </div>
+
+        <!-- Session -->
+        <div class="col-md-3">
+          <label class="text-white-50 small mb-1">Session (mois)</label>
+
+          {{ filtre_form.fields.session}}
+
+        </div>
+
+        <!-- Boutons -->
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-search flex-fill">
+            <i class="bi bi-funnel me-1"></i>Filtrer
+          </button>
+          {% if search or formation or session %}
+          <a href="{% url 'admin_dashboard' %}" class="btn btn-reset">
+            <i class="bi bi-x-circle"></i>
+          </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+
+    <!-- Tableau des apprenants -->
+    <div class="admin-table-card">
+      <div class="admin-table-header">
+        <h5 class="mb-0 text-white">
+          <i class="bi bi-table me-2 text-primary"></i>
+          {% if search %}
+          Resultats pour "{{ search }}" — {{ apprenants|length }} trouves
+          {% else %}
+          Liste des apprenants ({{ total }})
+          {% endif %}
+        </h5>
+      </div>
+
+      {% if apprenants %}
+      <div class="table-responsive">
+        <table class="table ctc-table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nom complet</th>
+              <th>WhatsApp</th>
+              <th>Formation</th>
+              <th>Session</th>
+              <th>Date d'inscription</th>
+              <th>Statut</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in apprenants %}
+            <tr class="{% if not a.is_active %}row-inactive{% endif %}">
+              <td class="text-muted">{{ a.id }}</td>
+              <td>
+                <div class="apprenant-avatar-cell">
+                  <div class="mini-avatar">{{ a.prenom|first|upper }}{{ a.nom|first|upper }}</div>
+                  <div>
+                    <div class="fw-600 text-white">{{ a.nom_complet }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="whatsapp-badge">
+                  <i class="bi bi-whatsapp me-1"></i>{{ a.whatsapp }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-info bg-opacity-10 text-info">
+                  {{ a.get_formation_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-primary bg-opacity-10 text-primary">
+                  {{ a.get_session_display }}
+                </span>
+              </td>
+              <td class="text-white-50">
+                <i class="bi bi-calendar3 me-1"></i>
+                {{ a.date_inscription|date:"d/m/Y" }}
+                <small class="d-block text-white-50">{{ a.date_inscription|time:"H:i" }}</small>
+              </td>
+              <td>
+                {% if a.is_active %}
+                <span class="status-badge status-active">
+                  <i class="bi bi-circle-fill me-1" style="font-size:.5rem;"></i>Actif
+                </span>
+                {% else %}
+                <span class="status-badge status-inactive">
+                  <i class="bi bi-circle-fill me-1" style="font-size:.5rem;"></i>Inactif
+                </span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="action-btns">
+                  <!-- Activer / Desactiver -->
+                  <a href="{% url 'toggle_apprenant' a.pk %}"
+                    class="btn-action {% if a.is_active %}btn-action-warn{% else %}btn-action-success{% endif %}"
+                    title="{% if a.is_active %}Desactiver{% else %}Activer{% endif %}">
+                    <i class="bi {% if a.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+                  </a>
+                  <!-- Supprimer -->
+                  <button class="btn-action btn-action-danger" title="Supprimer"
+                    onclick="confirmSupprimer('{{ a.nom_complet }}', '{% url 'supprimer_apprenant' a.pk %}')">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-people display-4 text-white-50"></i>
+        <p class="text-white-50 mt-3">
+          {% if search %}Aucun apprenant ne correspond a "{{ search }}".{% else %}Aucun apprenant inscrit pour le
+          moment.{% endif %}
+        </p>
+        {% if search %}<a href="{% url 'admin_dashboard' %}" class="btn btn-search">Voir tous</a>{% endif %}
+      </div>
+      {% endif %}
+
+    </div><!-- fin admin-table-card -->
+
+  </div>
+</div>
+
+<!-- Modal confirmation suppression -->
+<div class="modal fade" id="modalSupprimer" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content ctc-modal">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-white">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+          Confirmer la suppression
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="text-white-50">
+          Vous etes sur le point de supprimer definitivement le compte de
+          <strong class="text-white" id="modalNomApprenant"></strong>.
+          Cette action est irreversible.
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-secondary-ctc" data-bs-dismiss="modal">Annuler</button>
+        <a href="#" id="modalConfirmBtn" class="btn btn-danger-ctc">
+          <i class="bi bi-trash3 me-1"></i>Supprimer
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function confirmSupprimer(nom, url) {
+    document.getElementById('modalNomApprenant').textContent = nom;
+    document.getElementById('modalConfirmBtn').href = url;
+    new bootstrap.Modal(document.getElementById('modalSupprimer')).show();
+  }
+</script>
+{% endblock %}

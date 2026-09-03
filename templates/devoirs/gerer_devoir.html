@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Gérer le devoir : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- En-tête -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary">Administration</span>
+                    <span class="badge bg-info bg-opacity-25 text-info">{{ devoir.get_formation_display }}</span>
+                    <span class="badge bg-secondary">Session : {{ devoir.get_session_display }}</span>
+                </div>
+                <h2 class="text-white mb-1">{{ devoir.titre }}</h2>
+                <p class="text-white-50 mb-0">
+                    {{ questions|length }} question(s) enregistrée(s)
+                    {% if devoir.est_actif %}
+                    <span class="badge bg-success ms-2">Devoir Actif</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark ms-2">Inactif</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">
+                    <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Colonne gauche : Formulaire d'ajout -->
+            <div class="col-lg-5">
+                <div class="admin-table-card p-4 sticky-top" style="top: 20px;">
+                    <h5 class="text-white mb-3 d-flex align-items-center">
+                        <i class="bi bi-plus-circle-fill text-primary me-2"></i>Ajouter une question
+                    </h5>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Énoncé -->
+                        <div class="mb-3">
+                            <label for="{{ form.texte.id_for_label }}" class="form-label text-white-50 small">Énoncé de
+                                la question *</label>
+                            {{ form.texte }}
+                            {% if form.texte.errors %}<div class="text-danger small mt-1">{{ form.texte.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Choix A et B -->
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label text-white-50 small">Option A *</label>
+                                {{ form.choix_a }}
+                                {% if form.choix_a.errors %}<div class="text-danger small">{{ form.choix_a.errors }}
+                                </div>{% endif %}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-white-50 small">Option B *</label>
+                                {{ form.choix_b }}
+                                {% if form.choix_b.errors %}<div class="text-danger small">{{ form.choix_b.errors }}
+                                </div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Choix C et D -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label text-white-50 small">Option C *</label>
+                                {{ form.choix_c }}
+                                {% if form.choix_c.errors %}<div class="text-danger small">{{ form.choix_c.errors }}
+                                </div>{% endif %}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-white-50 small">Option D *</label>
+                                {{ form.choix_d }}
+                                {% if form.choix_d.errors %}<div class="text-danger small">{{ form.choix_d.errors }}
+                                </div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Bonne réponse et Ordre -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="{{ form.bonne_reponse.id_for_label }}"
+                                    class="form-label text-white-50 small">Bonne réponse *</label>
+                                {{ form.bonne_reponse }}
+                            </div>
+                            <div class="col-6">
+                                <label for="{{ form.ordre.id_for_label }}" class="form-label text-white-50 small">Numéro
+                                    / Ordre</label>
+                                {{ form.ordre }}
+                            </div>
+                        </div>
+
+                        <!-- Justification -->
+                        <div class="mb-3">
+                            <label for="{{ form.justification.id_for_label }}"
+                                class="form-label text-white-50 small">Explication (pour correction) *</label>
+                            {{ form.justification }}
+                            {% if form.justification.errors %}<div class="text-danger small mt-1">{{
+                                form.justification.errors }}</div>{% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-plus-lg me-1"></i>Enregistrer la question
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Colonne droite : Liste des questions -->
+            <div class="col-lg-7">
+                <h5 class="text-white mb-3 d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-list-check text-primary me-2"></i>Questions existantes</span>
+                    <span class="badge bg-primary rounded-pill">{{ questions|length }} question(s)</span>
+                </h5>
+
+                {% if questions %}
+                <div class="d-flex flex-column gap-3">
+                    {% for q in questions %}
+                    <div class="admin-table-card p-4 shadow-sm">
+
+                        <!-- En-tête de la question (Numéro + Boutons Action) -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-3 py-2">
+                                Question #{{ q.ordre }}
+                            </span>
+
+                            <div class="d-flex gap-2">
+                                <!-- ✏️ Modifier -->
+                                <a href="{% url 'modifier_question' q.pk %}" class="btn btn-sm btn-outline-warning"
+                                    title="Modifier cette question">
+                                    <i class="bi bi-pencil-square me-1"></i>Modifier
+                                </a>
+
+                                <!-- 🗑️ Supprimer -->
+                                <a href="{% url 'supprimer_question' q.pk %}" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Supprimer définitivement la question {{ q.ordre }} ?');"
+                                    title="Supprimer cette question">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Énoncé de la question -->
+                        <h6 class="text-white fw-bold mb-3 fs-5">{{ q.texte }}</h6>
+
+                        <!-- Grille des 4 options -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <div
+                                    class="p-2 rounded {% if q.bonne_reponse == 'A' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50 border border-secondary border-opacity-25{% endif %}">
+                                    <span
+                                        class="badge {% if q.bonne_reponse == 'A' %}bg-success{% else %}bg-secondary{% endif %} me-1">A</span>
+                                    {{ q.choix_a }}
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div
+                                    class="p-2 rounded {% if q.bonne_reponse == 'B' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50 border border-secondary border-opacity-25{% endif %}">
+                                    <span
+                                        class="badge {% if q.bonne_reponse == 'B' %}bg-success{% else %}bg-secondary{% endif %} me-1">B</span>
+                                    {{ q.choix_b }}
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div
+                                    class="p-2 rounded {% if q.bonne_reponse == 'C' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50 border border-secondary border-opacity-25{% endif %}">
+                                    <span
+                                        class="badge {% if q.bonne_reponse == 'C' %}bg-success{% else %}bg-secondary{% endif %} me-1">C</span>
+                                    {{ q.choix_c }}
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div
+                                    class="p-2 rounded {% if q.bonne_reponse == 'D' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50 border border-secondary border-opacity-25{% endif %}">
+                                    <span
+                                        class="badge {% if q.bonne_reponse == 'D' %}bg-success{% else %}bg-secondary{% endif %} me-1">D</span>
+                                    {{ q.choix_d }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Explication / Justification -->
+                        {% if q.justification %}
+                        <div
+                            class="p-3 rounded bg-info bg-opacity-10 border border-info border-opacity-25 text-white small">
+                            <i class="bi bi-lightbulb-fill text-warning me-2"></i><strong>Explication officielle
+                                :</strong> {{ q.justification }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="admin-table-card p-5 text-center">
+                    <i class="bi bi-question-circle display-4 text-white-50 mb-3"></i>
+                    <h5 class="text-white">Aucune question pour l'instant</h5>
+                    <p class="text-white-50 mb-0">Utilisez le formulaire à gauche pour enregistrer vos questions.</p>
+                </div>
+                {% endif %}
+            </div>
+
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Résultats : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- Carte Score / Résumé -->
+        <div class="admin-table-card p-4 mb-4 text-center">
+            <span class="badge bg-primary mb-2">{{ devoir.get_formation_display }} – Session :
+                {{devoir.get_session_display }}</span>
+            <h2 class="text-white mb-2">{{ devoir.titre }}</h2>
+
+            <div class="my-4">
+                {% if soumission %}
+                <div class="display-4 fw-bold text-success">{{ soumission.note }} / {{ devoir.total_questions }}</div>
+                <p class="text-white-50">Score obtenu lors de votre évaluation</p>
+                {% else %}
+
+                <span class="badge bg-warning text-dark px-3 py-2 fs-6 mb-2 rounded-pill">
+                    Mode consultation Administrateur
+                </span>
+                <p class="text-white-50">Corrigé officiel - {{devoir.total_questions}} questions (s)</p>
+
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-center gap-3">
+                {% if user.is_staff %}
+                <a href="{% url 'admin_dashboard'%}" class="btn btn-secondary-ctc">
+                    <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+                </a>
+                {% else %}
+                <a href="{% url 'liste_devoirs' %}" class="btn btn-secondary-ctc">
+                    <i class="bi bi-arrow-left me-1"></i>Retour aux devoirs
+                </a>
+                {% endif %}
+                <!-- 👉 Bouton de téléchargement PDF -->
+                <a href="{% url 'telecharger_devoir_pdf' devoir.pk %}" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>Télécharger le corrigé (PDF)
+                </a>
+            </div>
+        </div>
+
+        <!-- Détail des réponses avec justifications -->
+        <h4 class="text-white mb-3">Correction détaillée</h4>
+
+        <div class="d-flex flex-column gap-3">
+            {% if soumission %}
+            {# Affichage des reponses de l'apprenants #}
+            {% for rep in reponses_utilisateur %}
+            <div class="admin-table-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-primary bg-opacity-25 text-primary">Question #{{ forloop.counter }}</span>
+                    {% if rep.est_correcte %}
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                        <i class="bi bi-check-circle me-1"></i>Correct (+1 pt)
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">
+                        <i class="bi bi-x-circle me-1"></i>Incorrect
+                    </span>
+                    {% endif %}
+                </div>
+
+                <p class="text-white fw-bold fs-5 mb-3">{{ rep.question.texte }}</p>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <div
+                            class="p-2 rounded {% if rep.question.bonne_reponse == 'A' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% elif rep.reponse_choisie == 'A' %}bg-danger bg-opacity-25 border border-danger text-danger{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                            <span class="badge bg-secondary me-1">A</span> {{ rep.question.choix_a }}
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div
+                            class="p-2 rounded {% if rep.question.bonne_reponse == 'B' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% elif rep.reponse_choisie == 'B' %}bg-danger bg-opacity-25 border border-danger text-danger{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                            <span class="badge bg-secondary me-1">B</span> {{ rep.question.choix_b }}
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div
+                            class="p-2 rounded {% if rep.question.bonne_reponse == 'C' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% elif rep.reponse_choisie == 'C' %}bg-danger bg-opacity-25 border border-danger text-danger{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                            <span class="badge bg-secondary me-1">C</span> {{ rep.question.choix_c }}
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div
+                            class="p-2 rounded {% if rep.question.bonne_reponse == 'D' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% elif rep.reponse_choisie == 'D' %}bg-danger bg-opacity-25 border border-danger text-danger{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                            <span class="badge bg-secondary me-1">D</span> {{ rep.question.choix_d }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if rep.question.justification %}
+                <div class="p-3 rounded bg-info bg-opacity-10 border border-info border-opacity-25 text-white">
+                    <i class="bi bi-lightbulb-fill text-warning me-2">
+
+                    </i><strong>Explication :</strong> {{ rep.question.justification }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            {# Affichage Officiel des reponses en mode admin #}
+            {% for q in question %}
+            <div class="admin-table-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-primary bg-opacity-25 text-primary">Question #{{ q.ordre }}</span>
+
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                        Bonne réponses: Option {{q.bonne_reponse}}
+                    </span>
+
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                        Bonne réponses: Option {{q.texte}}
+                    </span>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <div
+                                class="p-2 rounded {% if q.bonne_reponse == 'A' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                                <span class="badge bg-secondary me-1">A</span> {{ q.choix_a }}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div
+                                class="p-2 rounded {% if q.bonne_reponse == 'B' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                                <span class="badge bg-secondary me-1">B</span> {{ q.choix_b }}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div
+                                class="p-2 rounded {% if q.bonne_reponse == 'C' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                                <span class="badge bg-secondary me-1">C</span> {{ q.choix_c }}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div
+                                class="p-2 rounded {% if q.bonne_reponse == 'D' %}bg-success bg-opacity-25 border border-success text-success fw-bold{% else %}bg-dark bg-opacity-50 text-white-50{% endif %}">
+                                <span class="badge bg-secondary me-1">D</span> {{ q.choix_d }}
+                            </div>
+                        </div>
+                    </div>
+                    {% if q.justification %}
+                    <div class="p-3 rounded bg-info bg-opacity-10 border border-info border-opacity-25 text-white">
+                        <i class="bi bi-lightbulb-fill text-warning me-2">
+
+                        </i><strong>Explication :</strong> {{ q.justification }}
+                    </div>
+                    {% endif %}
+
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+    {% endblock %}

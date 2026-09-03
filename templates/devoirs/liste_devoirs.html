@@ -1,0 +1,20 @@
+{% extends "base.html" %} {% block title %}Mes Devoirs & Evaluations Come To Come {% endblock %} {% block content %}
+<div class="container">
+    <h2 class="text-center">Mes Devoirs & Evaluations Come To Come </h2>
+    {% for item in devoir_utilisateur %}
+
+    <h3 class="text-center">{{ item.devoir.titre | default_if_none:" Aucun devoir disponibles" }}</h3>
+
+
+    <p class="text-end text-info">Niveau:{{ item.devoir.get_formation_display | default_if_none:"-" }}</p>
+    <p class="text-center text-info">Session:{{ item.devoir.get_session_display | default_if_none:"-" }}</p>
+
+    {% if item.soumission %}
+    <p class="text-center text-info">{{ item.soumission.note | default_if_none:"-" }}/ {{ item.devoir.total_questions | default_if_none:"-" }}</p>
+    <a href="{% url 'resultat_devoir' item.devoir.id %}">Voir correction </a> {% else %}
+    <a href="{% url 'passer_devoir' item.devoir.id %}">Commencer le devoir {{item.devoir.id}}</a> {% endif %}
+    <br> {% empty %}
+    <p class="text-center">Aucun devoir disponible pour le moment. Reviens plus tard pour plus de défis!</p>
+    {% endfor %}
+</div>
+{% endblock content %}
