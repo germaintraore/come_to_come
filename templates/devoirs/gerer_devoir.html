@@ -23,6 +23,11 @@
                     <span class="badge bg-warning text-dark ms-2">Inactif</span>
                     {% endif %}
                 </p>
+                <a href="{% url 'supprimer_devoir' devoir.pk %}" class="btn btn-outline-danger"
+                    onclick="return confirm('Supprimer définitivement ce devoir ?');">
+                    <i class="bi bi-trash3 me-1"></i>Supprimer ce devoir
+                </a>
+
             </div>
             <div>
                 <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">
