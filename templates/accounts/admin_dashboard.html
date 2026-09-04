@@ -30,6 +30,12 @@
             class="btn btn-export-outline me-2">
             <i class="bi bi-file-earmark-spreadsheet me-2"></i>CSV
           </a>
+          <a href="{% url 'export_pdf' %}?{% if formation %}formation={{ formation }}&{% endif %}{% if session %}session={{ session }}{% endif %}"
+            class="btn btn-danger text-white me-2">
+            <i class="bi bi-file-earmark-pdf me-2"></i>PDF
+          </a>
+
+
           <a href="{% url 'tableau_de_bord' %}" class="btn btn-secondary-ctc">
             <i class="bi bi-arrow-left me-1"></i>Mon espace
           </a>
@@ -61,7 +67,6 @@
         <table class="table ctc-table mb-0">
           <thead>
             <tr>
-              <th>#</th>
               <th>Titre du devoir</th>
               <th>Formation</th>
               <th>Session</th>
@@ -74,7 +79,6 @@
           <tbody>
             {% for d in devoirs %}
             <tr>
-              <td class="text-muted">{{ d.id }}</td>
               <td class="fw-bold text-white">{{ d.titre }}</td>
               <td>
                 <span class="badge bg-info bg-opacity-10 text-info">
@@ -140,6 +144,13 @@
                     onclick="return confirm('Supprimer ce devoir et toutes ses questions ?');" title="Supprimer">
                     <i class="bi bi-trash3-fill"></i>
                   </a>
+
+                  <!-- Modifier les informations du devoir -->
+                  <a href="{% url 'modifier_devoir' d.pk %}" class="btn-action btn-action-warn"
+                    title="Modifier les informations du devoir">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+
                 </div>
               </td>
 
@@ -208,7 +219,7 @@
         <div class="col-md-3">
           <label class="text-white-50 small mb-1">Type de formation</label>
 
-          {{ filtre_form.fields.formation}}
+          {{ filtre_form.formation}}
         </div>
 
         <!-- Session -->
@@ -251,7 +262,7 @@
         <table class="table ctc-table mb-0">
           <thead>
             <tr>
-              <th>#</th>
+
               <th>Nom complet</th>
               <th>WhatsApp</th>
               <th>Formation</th>
@@ -264,7 +275,7 @@
           <tbody>
             {% for a in apprenants %}
             <tr class="{% if not a.is_active %}row-inactive{% endif %}">
-              <td class="text-muted">{{ a.id }}</td>
+
               <td>
                 <div class="apprenant-avatar-cell">
                   <div class="mini-avatar">{{ a.prenom|first|upper }}{{ a.nom|first|upper }}</div>
@@ -274,9 +285,11 @@
                 </div>
               </td>
               <td>
-                <span class="whatsapp-badge">
-                  <i class="bi bi-whatsapp me-1"></i>{{ a.whatsapp }}
-                </span>
+                <!-- Lien direct WhatsApp avec icône -->
+                <a href="https://wa.me/{{ a.whatsapp|cut:' '|cut:'+' }}" target="_blank"
+                  class="whatsapp-badge text-decoration-none" title="Contacter sur WhatsApp">
+                  <i class="bi bi-whatsapp me-1 text-success"></i>{{ a.whatsapp }}
+                </a>
               </td>
               <td>
                 <span class="badge bg-info bg-opacity-10 text-info">
@@ -288,10 +301,11 @@
                   {{ a.get_session_display }}
                 </span>
               </td>
-              <td class="text-white-50">
-                <i class="bi bi-calendar3 me-1"></i>
-                {{ a.date_inscription|date:"d/m/Y" }}
-                <small class="d-block text-white-50">{{ a.date_inscription|time:"H:i" }}</small>
+              <td class="text-white fw-semibold">
+                <small class="bi bi-calendar3 me-1 text-info">
+                  {{ a.date_inscription|date:"d/m/Y"|default:"Non defini"}}</small>
+                <small class="d-block text-white-75" style="color: #bed2eb;"><i
+                    class="bi bi-clock me-1 text-muted"></i>{{ a.date_inscription|time:"H:i" }}</small>
               </td>
               <td>
                 {% if a.is_active %}
@@ -306,15 +320,22 @@
               </td>
               <td class="text-center">
                 <div class="action-btns">
-                  <!-- Activer / Desactiver -->
+                  <!-- 1. Activer / Désactiver -->
                   <a href="{% url 'toggle_apprenant' a.pk %}"
                     class="btn-action {% if a.is_active %}btn-action-warn{% else %}btn-action-success{% endif %}"
-                    title="{% if a.is_active %}Desactiver{% else %}Activer{% endif %}">
+                    title="{% if a.is_active %}Désactiver le compte{% else %}Activer le compte{% endif %}">
                     <i class="bi {% if a.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
                   </a>
-                  <!-- Supprimer -->
-                  <button class="btn-action btn-action-danger" title="Supprimer"
-                    onclick="confirmSupprimer('{{ a.nom_complet }}', '{% url 'supprimer_apprenant' a.pk %}')">
+
+                  <!-- 2. Changer de session -->
+                  <button type="button" class="btn-action btn-action-info" title="Changer de session"
+                    onclick="ouvrirModalReaffecter('{{ a.id }}', '{{ a.nom_complet|escapejs }}', '{{ a.session }}', '{% url 'reaffecter_apprenant' a.pk %}')">
+                    <i class="bi bi-arrow-left-right"></i>
+                  </button>
+
+                  <!-- 3. Supprimer -->
+                  <button type="button" class="btn-action btn-action-danger" title="Supprimer"
+                    onclick="confirmSupprimer('{{ a.nom_complet|escapejs }}', '{% url 'supprimer_apprenant' a.pk %}')">
                     <i class="bi bi-trash3"></i>
                   </button>
                 </div>
@@ -322,6 +343,7 @@
             </tr>
             {% endfor %}
           </tbody>
+
         </table>
       </div>
 
@@ -367,6 +389,43 @@
     </div>
   </div>
 </div>
+<!-- Modal Réaffectation de session -->
+<div class="modal fade" id="modalReaffecter" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content ctc-modal">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-white">
+          <i class="bi bi-arrow-left-right text-primary me-2"></i>
+          Réaffecter l'apprenant
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <form id="formReaffecter" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p class="text-white-50 mb-3">
+            Sélectionnez la nouvelle session pour <strong class="text-white" id="modalReaffecterNom"></strong> :
+          </p>
+          <div class="mb-3">
+            <label class="form-label text-white-50 small">Nouvelle session (mois)</label>
+            <select name="session" id="modalSelectSession" class="form-control" required>
+              {% for val, label in session_choices %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary-ctc" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer le changement
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -375,6 +434,17 @@
     document.getElementById('modalNomApprenant').textContent = nom;
     document.getElementById('modalConfirmBtn').href = url;
     new bootstrap.Modal(document.getElementById('modalSupprimer')).show();
+  }
+
+
+  function ouvrirModalReaffecter(id, nom, sessionActuelle, actionUrl) {
+    document.getElementById('modalReaffecterNom').textContent = nom;
+    document.getElementById('formReaffecter').action = actionUrl;
+    var select = document.getElementById('modalSelectSession');
+    if (select && sessionActuelle) {
+      select.value = sessionActuelle;
+    }
+    new bootstrap.Modal(document.getElementById('modalReaffecter')).show();
   }
 </script>
 {% endblock %}

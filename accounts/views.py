@@ -13,6 +13,15 @@ from .models import Apprenant
 from devoirs.models import Devoir
 
 
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+
+
+
 class AdminFiltreForm(forms.Form):
     """Formulaire de filtrage pour le panneau d'administration."""
     formation = forms.ChoiceField(
@@ -142,6 +151,7 @@ def admin_dashboard(request):
         'filtre_form': filtre_form,
         'formation':   formation,
         'session':     session,
+        'session_choices': Apprenant.SESSION_MOIS_CHOICES,
     }
     return render(request, 'accounts/admin_dashboard.html', context)
 
@@ -170,6 +180,28 @@ def supprimer_apprenant(request, pk):
         messages.success(request, f"Compte de {nom} supprime.")
     except Apprenant.DoesNotExist:
         messages.error(request, "Apprenant introuvable.")
+    return redirect('admin_dashboard')
+
+@admin_required
+def reaffecter_apprenant(request, pk):
+    """Changer la session d'un apprenant."""
+    if request.method == 'POST':
+        try:
+            apprenant = Apprenant.objects.get(pk=pk, is_staff=False)
+            nouvelle_session = request.POST.get('session', '').strip()
+            valid_sessions = dict(Apprenant.SESSION_MOIS_CHOICES)
+            if nouvelle_session in valid_sessions:
+                ancienne_session_label = apprenant.get_session_display()
+                apprenant.session = nouvelle_session
+                apprenant.save()
+                messages.success(
+                    request,
+                    f"Session de {apprenant.nom_complet} modifiée : {ancienne_session_label} ➔ {valid_sessions[nouvelle_session]}."
+                )
+            else:
+                messages.error(request, "Session sélectionnée invalide.")
+        except Apprenant.DoesNotExist:
+            messages.error(request, "Apprenant introuvable.")
     return redirect('admin_dashboard')
 
 
@@ -318,5 +350,138 @@ def export_excel(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
+
+@admin_required
+def export_pdf(request):
+    """Télécharger la liste des apprenants en PDF selon les filtres (session, formation)."""
+    apprenants, formation, session = _get_filtree_queryset(request)
+
+    buffer = io.BytesIO()
+    # Format paysage (landscape) pour un tableau aéré et lisible
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        rightMargin=1.5 * cm,
+        leftMargin=1.5 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm
+    )
+
+    styles = getSampleStyleSheet()
+    
+    style_titre = ParagraphStyle(
+        'TitreDoc',
+        parent=styles['Heading1'],
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#1E293B'),
+        alignment=TA_CENTER,
+        spaceAfter=4
+    )
+
+    style_sub = ParagraphStyle(
+        'SousTitreDoc',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#64748B'),
+        alignment=TA_CENTER,
+        spaceAfter=15
+    )
+
+    style_cell = ParagraphStyle(
+        'CellText',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=12,
+        textColor=colors.HexColor('#1E293B')
+    )
+
+    style_header_cell = ParagraphStyle(
+        'HeaderCell',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        fontName='Helvetica-Bold',
+        textColor=colors.white,
+        alignment=TA_CENTER
+    )
+
+    elements = []
+
+    # Titre du document
+    titre_texte = "COME TO CODE — LISTE DES APPRENANTS"
+    elements.append(Paragraph(titre_texte, style_titre))
+
+    # Détails du filtre
+    sous_titre_parties = []
+    if session:
+        sous_titre_parties.append(f"Session : {_label_session(session).upper()}")
+    else:
+        sous_titre_parties.append("Toutes les sessions")
+
+    if formation:
+        sous_titre_parties.append(f"Formation : {_label_formation(formation)}")
+
+    sous_titre_parties.append(f"Total : {apprenants.count()} apprenant(s)")
+    sous_titre_parties.append(f"Généré le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    
+    elements.append(Paragraph(" • ".join(sous_titre_parties), style_sub))
+
+    # Construction du tableau
+    headers = [
+        Paragraph("N°", style_header_cell),
+        Paragraph("Nom & Prénom", style_header_cell),
+        Paragraph("WhatsApp", style_header_cell),
+        Paragraph("Formation", style_header_cell),
+        Paragraph("Session", style_header_cell),
+        Paragraph("Date d'inscription", style_header_cell),
+        Paragraph("Statut", style_header_cell)
+    ]
+    data = [headers]
+
+    for idx, a in enumerate(apprenants, start=1):
+        statut_label = "Actif" if a.is_active else "Inactif"
+        data.append([
+            Paragraph(str(idx), style_cell),
+            Paragraph(f"<b>{a.nom_complet}</b>", style_cell),
+            Paragraph(a.whatsapp, style_cell),
+            Paragraph(a.get_formation_display(), style_cell),
+            Paragraph(a.get_session_display(), style_cell),
+            Paragraph(a.date_inscription.strftime('%d/%m/%Y'), style_cell),
+            Paragraph(statut_label, style_cell)
+        ])
+
+    # Largeurs des colonnes (Total = ~26.7 cm pour A4 paysage)
+    col_widths = [1.2 * cm, 5.5 * cm, 3.8 * cm, 6.0 * cm, 3.2 * cm, 3.8 * cm, 2.5 * cm]
+    
+    t = Table(data, colWidths=col_widths, repeatRows=1)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563EB')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (4, 0), (6, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
+
+    buffer.seek(0)
+    suffix = ""
+    if session:
+        suffix += f"_{session}"
+    if formation:
+        suffix += f"_{formation}"
+
+    filename = f"liste_participants{suffix}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
 
 

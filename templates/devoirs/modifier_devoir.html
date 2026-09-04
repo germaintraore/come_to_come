@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier le devoir : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <!-- En-tête -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <span class="badge bg-warning text-dark mb-2">
+                            <i class="bi bi-pencil-square me-1"></i>Modification
+                        </span>
+                        <h2 class="text-white mb-0">Modifier le Devoir</h2>
+                        <small class="text-white-50">Modifiez le titre, les consignes ou les options associées.</small>
+                    </div>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">
+                        <i class="bi bi-arrow-left me-1"></i>Retour
+                    </a>
+                </div>
+
+                <!-- Formulaire Card -->
+                <div class="card bg-dark text-white border-secondary p-4 shadow">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Titre -->
+                        <div class="mb-3">
+                            <label for="{{ form.titre.id_for_label }}" class="form-label text-white-50">Titre du devoir
+                                *</label>
+                            {{ form.titre }}
+                            {% if form.titre.errors %}
+                            <div class="text-danger small">{{ form.titre.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Formation et Session sur 2 colonnes -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.formation.id_for_label }}"
+                                    class="form-label text-white-50">Formation concernée *</label>
+                                {{ form.formation }}
+                                {% if form.formation.errors %}
+                                <div class="text-danger small">{{ form.formation.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.session.id_for_label }}" class="form-label text-white-50">Session
+                                    (Mois) *</label>
+                                {{ form.session }}
+                                {% if form.session.errors %}
+                                <div class="text-danger small">{{ form.session.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description / Consignes -->
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label text-white-50">Consignes
+                                & Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Statut actif -->
+                        <div class="form-check form-switch mb-4">
+                            {{ form.est_actif }}
+                            <label class="form-check-label text-white" for="{{ form.est_actif.id_for_label }}">
+                                Devoir actif (visible et accessible par les apprenants de la session)
+                            </label>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">Annuler</a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

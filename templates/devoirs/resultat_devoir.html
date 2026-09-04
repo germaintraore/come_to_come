@@ -14,7 +14,8 @@
 
             <div class="my-4">
                 {% if soumission %}
-                <div class="display-4 fw-bold text-success">{{ soumission.note }} / {{ devoir.total_questions }}</div>
+                <div class="display-4 fw-bold text-success">{{ soumission.note|floatformat:0 }} /
+                    {{ devoir.total_questions }}</div>
                 <p class="text-white-50">Score obtenu lors de votre évaluation</p>
                 {% else %}
 

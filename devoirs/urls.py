@@ -20,6 +20,7 @@ urlpatterns = [
     path('<int:pk>/dupliquer/',views.dupliquer_devoir,name='dupliquer_devoir'),
     
     path('questions/<int:pk>/modifier/', views.modifier_question, name='modifier_question'),
+    path('devoirs/<int:pk>/modifier/', views.modifier_devoir, name='modifier_devoir'),
 
 
 

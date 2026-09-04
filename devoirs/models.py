@@ -71,7 +71,7 @@ class Soumission(models.Model):
 
     apprenant       = models.ForeignKey(Apprenant, on_delete=models.CASCADE, related_name='soumissions')
     devoir          = models.ForeignKey(Devoir, on_delete=models.CASCADE, related_name='soumissions')
-    note            = models.FloatField(verbose_name="Note obtenue")
+    note            = models.PositiveBigIntegerField(verbose_name="Note obtenue")
     date_soumission = models.DateTimeField(auto_now_add=True)
 
     class Meta:

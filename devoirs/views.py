@@ -321,7 +321,7 @@ def telecharger_devoir_pdf(request, pk):
         reponses_dict = {rep.question_id: rep for rep in soumission.reponses.all()}
         info_data.append([
             Paragraph(f"<b>Apprenant :</b> {soumission.apprenant.nom_complet}", body_style),
-            Paragraph(f"<b>Note obtenue :</b> <font color='{green_hex}'><b>{soumission.note} / {devoir.total_questions()}</b></font>", body_style),
+            Paragraph(f"<b>Note obtenue :</b> <font color='{green_hex}'><b>{int(soumission.note)} / {devoir.total_questions()}</b></font>", body_style),
         ])
     else:
         reponses_dict = {}
@@ -430,5 +430,30 @@ def dupliquer_devoir(request,pk):
         form=DupliquerDevoirForm(instance=devoir_source)
         return render(request,'devoirs/dupliquer_devoir.html',{'devoir':devoir_source ,
         'form':form})
+
+@login_required
+def modifier_devoir(request, pk):
+    """Modifier les attributs d'un devoir existant (titre, formation, session, consignes, statut)."""
+    if not request.user.is_staff:
+        messages.error(request, "Accès réservé aux administrateurs.")
+        return redirect('tableau_de_bord')
+
+    devoir = get_object_or_404(Devoir, pk=pk)
+
+    if request.method == 'POST':
+        # On passe instance=devoir pour mettre à jour l'enregistrement existant
+        form = DevoirForm(request.POST, instance=devoir)
+        if form.is_valid():
+            devoir_modifie = form.save()
+            messages.success(request, f"Le devoir « {devoir_modifie.titre} » a été mis à jour avec succès !")
+            return redirect('admin_dashboard')
+    else:
+        # En mode GET : charge le formulaire pré-rempli avec les données actuelles du devoir
+        form = DevoirForm(instance=devoir)
+
+    return render(request, 'devoirs/modifier_devoir.html', {
+        'form': form,
+        'devoir': devoir,
+    })
 
       

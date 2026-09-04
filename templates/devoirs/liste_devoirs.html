@@ -10,7 +10,8 @@
     <p class="text-center text-info">Session:{{ item.devoir.get_session_display | default_if_none:"-" }}</p>
 
     {% if item.soumission %}
-    <p class="text-center text-info">{{ item.soumission.note | default_if_none:"-" }}/ {{ item.devoir.total_questions | default_if_none:"-" }}</p>
+    <p class="text-center text-info">{{ item.soumission.note |floatformat:0 | default_if_none:"-" }}/
+        {{ item.devoir.total_questions | default_if_none:"-" }}</p>
     <a href="{% url 'resultat_devoir' item.devoir.id %}">Voir correction </a> {% else %}
     <a href="{% url 'passer_devoir' item.devoir.id %}">Commencer le devoir {{item.devoir.id}}</a> {% endif %}
     <br> {% empty %}

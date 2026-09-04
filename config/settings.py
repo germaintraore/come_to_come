@@ -18,7 +18,7 @@ if env_path.exists():
             line = line.strip()
             if line and not line.startswith('#') and '=' in line:
                 k, v = line.split('=', 1)
-                os.environ.setdefault(k.strip(), v.strip())
+                os.environ[k.strip()] = v.strip()
 
 
 def get_env(key, default=None):
@@ -30,7 +30,7 @@ SECRET_KEY = get_env(
     'django-insecure-ctc-2s-informatique-plus-change-in-production-2025!'
 )
 
-DEBUG = get_env('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = str(get_env('DJANGO_DEBUG', 'True')).strip().lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['*']  # Permet l'acces depuis tout le reseau local
 
