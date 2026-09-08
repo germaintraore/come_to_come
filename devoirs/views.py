@@ -314,8 +314,13 @@ def telecharger_devoir_pdf(request, pk):
         [
             Paragraph(f"<b>Formation :</b> {devoir.get_formation_display()}", body_style),
             Paragraph(f"<b>Session :</b> {devoir.get_session_display()}", body_style),
+        ],
+        [
+            Paragraph("<b>Formateur :</b> TRAORE Germain", body_style),
+            Paragraph("<b>Tél :</b> 07 27 34 11", body_style),
         ]
     ]
+
 
     if soumission:
         reponses_dict = {rep.question_id: rep for rep in soumission.reponses.all()}
