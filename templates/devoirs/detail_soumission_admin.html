@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Copie de {{ apprenant.nom_complet }} – {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- En-tête -->
+        <div class="admin-header mb-4">
+            <a href="{% url 'liste_soumission_devoir' devoir.pk %}" class="btn btn-sm btn-outline-light mb-2">
+                <i class="bi bi-arrow-left me-1"></i>Retour aux résultats du devoir
+            </a>
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="admin-title">Copie de : {{ apprenant.nom_complet }}</h1>
+                    <p class="text-white-50 mb-0">
+                        Devoir : <strong class="text-white">{{ devoir.titre }}</strong> |
+                        WhatsApp : <strong class="text-white">{{ apprenant.whatsapp }}</strong> |
+                        Passé le : {{ soumission.date_soumission|date:"d/m/Y à H:i" }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <span class="badge bg-success fs-5 p-3">
+                        Note : {{ soumission.note }} / {{ devoir.total_questions }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Réponses détaillées -->
+        <div class="row g-4">
+            {% for rep in reponses %}
+            <div class="col-12">
+                <div
+                    class="card bg-dark text-white border {% if rep.est_correcte %}border-success{% else %}border-danger{% endif %} shadow-sm">
+                    <div
+                        class="card-header d-flex justify-content-between align-items-center {% if rep.est_correcte %}bg-success bg-opacity-25{% else %}bg-danger bg-opacity-25{% endif %}">
+                        <span class="fw-bold">Question {{ rep.question.ordre }}</span>
+                        {% if rep.est_correcte %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Correct (+1)</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Incorrect (0)</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">{{ rep.question.texte }}</h6>
+
+                        <!-- Options -->
+                        <div class="row g-2 mb-3">
+                            <div
+                                class="col-md-6 p-2 rounded {% if rep.question.bonne_reponse == 'A' %}border border-success bg-success bg-opacity-10{% elif rep.reponse_choisie == 'A' %}border border-danger bg-danger bg-opacity-10{% endif %}">
+                                <strong>A.</strong> {{ rep.question.choix_a }}
+                            </div>
+                            <div
+                                class="col-md-6 p-2 rounded {% if rep.question.bonne_reponse == 'B' %}border border-success bg-success bg-opacity-10{% elif rep.reponse_choisie == 'B' %}border border-danger bg-danger bg-opacity-10{% endif %}">
+                                <strong>B.</strong> {{ rep.question.choix_b }}
+                            </div>
+                            <div
+                                class="col-md-6 p-2 rounded {% if rep.question.bonne_reponse == 'C' %}border border-success bg-success bg-opacity-10{% elif rep.reponse_choisie == 'C' %}border border-danger bg-danger bg-opacity-10{% endif %}">
+                                <strong>C.</strong> {{ rep.question.choix_c }}
+                            </div>
+                            <div
+                                class="col-md-6 p-2 rounded {% if rep.question.bonne_reponse == 'D' %}border border-success bg-success bg-opacity-10{% elif rep.reponse_choisie == 'D' %}border border-danger bg-danger bg-opacity-10{% endif %}">
+                                <strong>D.</strong> {{ rep.question.choix_d }}
+                            </div>
+                        </div>
+
+                        <!-- Récapitulatif -->
+                        <p class="mb-1">
+                            <strong>Réponse de l'élève :</strong>
+                            <span class="badge {% if rep.est_correcte %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ rep.reponse_choisie|default:"Aucune" }}
+                            </span>
+                            | <strong>Bonne réponse :</strong>
+                            <span class="badge bg-success">{{ rep.question.bonne_reponse }}</span>
+                        </p>
+
+                        {% if rep.question.justification %}
+                        <div class="alert alert-info py-2 px-3 mt-2 mb-0">
+                            <i class="bi bi-lightbulb me-1"></i><strong>Explication :</strong> {{
+                            rep.question.justification }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

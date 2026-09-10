@@ -461,4 +461,52 @@ def modifier_devoir(request, pk):
         'devoir': devoir,
     })
 
+@login_required
+def liste_soumission_devoir(request, pk):
+    """Afficher la liste des apprénants ayant composé pour un devoir donné"""
+    if not request.user.is_staff:
+        messages.error(request,"Accès réfusé")
+        return redirect('tableau_de_bord')
+    
+    devoir=get_object_or_404(Devoir,pk=pk)
+    # recupère toutes les soummissions pour ce devoir avec les infos des apprenants
+    soumissions=devoir.soumissions.select_related('apprenant').order_by('-date_soumission')
+    total_soumissions=soumissions.count()
+    moyenne=None
+    if total_soumissions  > 0:
+        moyenne=round(sum(s.note for s in soumissions )/total_soumissions,2)
+        return render(request,
+        'devoirs/liste_soumission_admin.html',
+        {'devoir':devoir,
+        'soumissions':soumissions,
+        'total_soumissions':total_soumissions,
+        'moyenne':moyenne,})
+
+@login_required
+def detail_soumission_admin(request,pk):
+    """Affiche les detailes et les reponses complètes d'un élève pour une soumission donnée"""
+
+    if not request.user.is_staff:
+        messages.error(request,"Accès réfusé.")
+        return redirect('tableau_de_bord')
+
+    soumission = get_object_or_404(Soumission, pk=pk)
+    
+    devoir = soumission.devoir
+    apprenant = soumission.apprenant
+    reponses = soumission.reponses.select_related('question').order_by('question_id')
+    total_questions = devoir.total_questions()
+
+    
+    context = {
+        'soumission': soumission,
+        'devoir': devoir,
+        'apprenant': apprenant,
+        'reponses': reponses,
+        'total_questions': total_questions,
+        'note': soumission.note,
+    }
+    
+    return render(request, 'devoirs/detail_soumission_admin.html', context)
+
       

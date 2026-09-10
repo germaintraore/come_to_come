@@ -22,6 +22,8 @@ urlpatterns = [
     path('questions/<int:pk>/modifier/', views.modifier_question, name='modifier_question'),
     path('devoirs/<int:pk>/modifier/', views.modifier_devoir, name='modifier_devoir'),
 
+    path('<int:pk>/soumission/',views.liste_soumission_devoir,name='liste_soumission_devoir'),
+    path('soumission/<int:pk>/detail/',views.detail_soumission_admin,name='detail_soumission_admin'),
 
 
 ]

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Résultats : {{ devoir.titre }} – Come To Code{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- En-tête -->
+        <div class="admin-header mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-light mb-2">
+                        <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+                    </a>
+                    <h1 class="admin-title text-white">Résultats : {{ devoir.titre }}</h1>
+                    <p class="text-white-75 mb-0" style="color: #cbd5e1;">
+                        Formation : <strong class="text-white">{{ devoir.get_formation_display }}</strong> |
+                        Session : <strong class="text-info">{{ devoir.get_session_display }}</strong>
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary fs-6 px-3 py-2 text-white shadow-sm">
+                        <i class="bi bi-people-fill me-1"></i>{{ total_soumissions }} participant(s)
+                    </span>
+                    {% if moyenne is not None %}
+                    <span class="badge bg-info fs-6 px-3 py-2 text-dark fw-bold shadow-sm">
+                        <i class="bi bi-calculator me-1"></i>Moyenne : {{ moyenne }} / {{ devoir.total_questions }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des soumissions -->
+        <div class="admin-table-card shadow">
+            <div class="admin-table-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white fw-bold">
+                    <i class="bi bi-list-check me-2 text-primary"></i>Élèves ayant composé ce devoir
+                </h5>
+                <span class="text-white-50 small">Total : {{ total_soumissions }} soumission(s)</span>
+            </div>
+
+            {% if soumissions %}
+            <div class="table-responsive">
+                <table class="table ctc-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Apprenant</th>
+                            <th>WhatsApp</th>
+                            <th>Note obtenue</th>
+                            <th>Score (%)</th>
+                            <th>Date de passage</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in soumissions %}
+                        <tr>
+                            <!-- 1. Apprenant avec Avatar -->
+                            <td>
+                                <div class="badge bg-success text-white px-2.5 py-1.5 fs-6 fw-semibold">
+
+                                    <div>
+                                        <div class="fw-bold text-white fs-6">{{ s.apprenant.nom_complet }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- 2. WhatsApp cliquable avec icône -->
+                            <td>
+                                <a href="https://wa.me/{{ s.apprenant.whatsapp|cut:' '|cut:'+' }}" target="_blank"
+                                    class="whatsapp-badge text-decoration-none fw-semibold"
+                                    title="Contacter sur WhatsApp">
+                                    <i class="bi bi-whatsapp me-1 text-success"></i>{{ s.apprenant.whatsapp }}
+                                </a>
+                            </td>
+
+                            <!-- 3. Note nette et visible -->
+                            <td>
+                                <span class="badge bg-success text-white px-2.5 py-1.5 fs-6 fw-semibold">
+                                    <i class="bi bi-award me-1"></i>{{ s.note }} / {{ devoir.total_questions }}
+                                </span>
+                            </td>
+
+                            <!-- 4. Score % avec distinction admis / non-admis -->
+                            <td>
+                                {% widthratio s.note devoir.total_questions 100 as score %}
+                                {% if score|add:0 >= 50 %}
+                                <span class="badge bg-success text-white px-2.5 py-1.5 fs-6 fw-semibold">
+                                    <i class="bi bi-check-circle me-1"></i>{{ score }}%
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger text-white px-2.5 py-1.5 fs-6 fw-semibold">
+                                    <i class="bi bi-x-circle me-1"></i>{{ score }}%
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- 5. Date bien lisible -->
+                            <td>
+                                <div>
+                                    <span class="text-white fw-semibold">
+                                        <i class="bi bi-calendar3 me-1 text-info"></i>
+                                        {{ s.date_soumission|date:"d/m/Y" }}
+                                    </span>
+                                    <small class="d-block mt-1" style="color: #94a3b8 !important;">
+                                        <i class="bi bi-clock me-1 text-secondary"></i>
+                                        {{ s.date_soumission|time:"H:i"}}
+                                    </small>
+                                </div>
+                            </td>
+
+
+
+                            <!-- 6. Bouton d'action -->
+                            <td class="text-center">
+                                <a href="{% url 'detail_soumission_admin' s.pk %}"
+                                    class="btn btn-primary btn-sm px-3 py-1.5 shadow-sm fw-semibold">
+                                    <i class="bi bi-eye-fill me-1"></i>Voir les réponses
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-5 text-center text-white-50">
+                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50 text-white"></i>
+                <h6 class="text-white">Aucun élève n'a encore composé ce devoir.</h6>
+                <p class="text-white-50 mb-0">Les résultats apparaîtront ici dès qu'un apprenant aura validé son devoir.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

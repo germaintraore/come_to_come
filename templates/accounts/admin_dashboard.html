@@ -120,6 +120,13 @@
                     title="Voir la correction">
                     <i class="bi bi-eye-fill"></i>
                   </a>
+                  <!-- Voir les soumissions en ligne -->
+
+                  <a href="{% url 'liste_soumission_devoir' d.pk %}" class="btn-action btn-action-primary"
+                    title="Voir les soumissions">
+                    <i class="bi bi-people-fill"></i>
+                  </a>
+
 
                   <!-- Télécharger le PDF -->
                   <a href="{% url 'telecharger_devoir_pdf' d.pk %}" class="btn-action btn-action-primary"
