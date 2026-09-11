@@ -80,12 +80,14 @@
                             <!-- 1. Nom de l'apprenant avec Avatar -->
                             <td style="padding: 1.2rem 1rem;">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="mini-avatar" style="width: 42px; height: 42px; font-size: 1rem;">
+                                    <!-- Avatar rond avec les 2 initiales uniquement (ex: CO pour Chérif OUEDRAOGO) -->
+                                    <div class="mini-avatar flex-shrink-0" style="width: 42px; height: 42px; font-size: 0.95rem; line-height: 42px; text-align: center;">
                                         {{ s.apprenant.prenom|first|upper }}{{ s.apprenant.nom|first|upper }}
                                     </div>
+                                    <!-- Nom complet et date d'inscription bien visibles -->
                                     <div>
-                                        <div class="fw-bold text-white fs-6">{{ s.apprenant.nom_complet }}</div>
-                                        <div class="small" style="color: #94a3b8;">
+                                        <div class="fw-bold text-white fs-6 text-nowrap">{{ s.apprenant.nom_complet }}</div>
+                                        <div class="small text-nowrap" style="color: #94a3b8;">
                                             <i class="bi bi-calendar-event me-1"></i>Inscrit le : {{ s.apprenant.date_inscription|date:"d/m/Y"|default:"-" }}
                                         </div>
                                     </div>
