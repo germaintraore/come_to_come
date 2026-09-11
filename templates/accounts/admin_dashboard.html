@@ -241,13 +241,19 @@
                   </td>
 
                   <!-- Date & heure d'inscription -->
-                  <td class="text-white fw-semibold">
-                    <small class="bi bi-calendar3 me-1 text-info">
-                      {{ a.date_inscription|date:"d/m/Y"|default:"Non définie" }}
-                    </small>
-                    <small class="d-block text-white-75" style="color: #bed2eb;">
-                      <i class="bi bi-clock me-1 text-muted"></i>{{ a.date_inscription|time:"H:i" }}
-                    </small>
+                  <td>
+                    <div class="d-flex flex-column gap-1">
+                      {% if a.date_inscription %}
+                      <span class="text-white fw-semibold">
+                        <i class="bi bi-calendar3 text-info me-1"></i>{{ a.date_inscription|date:"d/m/Y" }}
+                      </span>
+                      <span class="text-white-75 small" style="color: #cbd5e1;">
+                        <i class="bi bi-clock text-warning me-1"></i>{{ a.date_inscription|date:"H:i" }}
+                      </span>
+                      {% else %}
+                      <span class="text-white-50 small">Non définie</span>
+                      {% endif %}
+                    </div>
                   </td>
 
                   <!-- Statut Actif / Inactif -->
