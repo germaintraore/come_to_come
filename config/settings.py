@@ -5,6 +5,7 @@ Configuration Django principale - Base de donnees PostgreSQL
 
 from pathlib import Path
 import os
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,11 +77,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# ============================================================
-# BASE DE DONNEES - PostgreSQL
-# ============================================================
-# Configurable via le fichier .env (voir .env.example)
-DATABASES = {
+
+DATABASE_URL=os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES={
+        'default': dj_database_url.config   (
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True
+            
+        )
+    }
+else:
+    # ============================================================
+    # BASE DE DONNEES - PostgreSQL
+        # ============================================================
+    # Configurable via le fichier .env (voir .env.example)
+    DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql',
         'NAME':     get_env('DB_NAME', 'come_to_code_db'),
@@ -89,6 +103,26 @@ DATABASES = {
         'PORT':     get_env('DB_PORT', '5432'),
     }
 }
+        
+# Sécurité automatique en production
+if not DEBUG:
+    # Hôtes autorisés en production
+    ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
+    CSRF_TRUSTED_ORIGINS = [
+        f'https://{h.strip()}' for h in ALLOWED_HOSTS if h.strip() and h != '*'
+    ]
+    # Sécurité SSL / Cookies
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Stockage des fichiers statiques compressés avec Whitenoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+
 
 AUTH_USER_MODEL = 'accounts.Apprenant'
 
