@@ -7,7 +7,9 @@
 <div class="dashboard-wrapper">
     <div class="container py-5">
 
-        <!-- Welcome Banner -->
+        <!-- ======================================================================= -->
+        <!-- 1. BANNIÈRE DE BIENVENUE APPRENANT                                      -->
+        <!-- ======================================================================= -->
         <div class="welcome-banner mb-5">
             <div class="welcome-bg-shapes">
                 <div class="wb-shape wb-shape-1"></div>
@@ -16,15 +18,25 @@
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <div class="welcome-greeting">Bienvenue sur ton espace 👋</div>
-                    <h1 class="welcome-name">{{ apprenant.nom_complet }} </h1>
-                    <p class="welcome-name"> <a href="{% url 'liste_devoirs' %}">Voir mes devoirs</a> </p>
-                    <p class="welcome-message">
+                    <h1 class="welcome-name">{{ apprenant.nom_complet }}</h1>
+                    
+                    <p class="welcome-message mt-2 mb-4">
                         Tu fais maintenant partie de la famille <strong>Come To Code</strong>.
                         Ton voyage vers la maîtrise de la programmation commence ici.
-                        <span class="text-warning">Chaque ligne de code que tu écriras te rapprochera de tes
-                            rêves.</span>
+                        <span class="text-warning">Chaque ligne de code que tu écriras te rapprochera de tes rêves.</span>
                     </p>
+
+                    <!-- Bouton d'accès direct aux devoirs -->
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'liste_devoirs' %}" class="btn btn-primary px-4">
+                            <i class="bi bi-journal-check me-2"></i>Accéder à mes devoirs & QCM
+                        </a>
+                        <a href="{% url 'accueil' %}" class="btn btn-outline-light px-3">
+                            <i class="bi bi-book me-2"></i>Ressources de cours
+                        </a>
+                    </div>
                 </div>
+
                 <div class="col-md-4 text-center d-none d-md-block">
                     <div class="welcome-avatar">
                         <i class="bi bi-person-badge-fill"></i>
@@ -37,12 +49,14 @@
             </div>
         </div>
 
-        <!-- Profile & Info Cards -->
+        <!-- ======================================================================= -->
+        <!-- 2. CARTES D'INFORMATIONS DU PROFIL                                      -->
+        <!-- ======================================================================= -->
         <div class="row g-4 mb-5">
 
-            <!-- Profil Card -->
+            <!-- Carte 1 : Profil -->
             <div class="col-md-6 col-lg-4">
-                <div class="dash-card">
+                <div class="dash-card h-100">
                     <div class="dash-card-icon bg-primary-soft">
                         <i class="bi bi-person-circle text-primary"></i>
                     </div>
@@ -60,9 +74,9 @@
                 </div>
             </div>
 
-            <!-- Contact Card -->
+            <!-- Carte 2 : Contact & WhatsApp -->
             <div class="col-md-6 col-lg-4">
-                <div class="dash-card">
+                <div class="dash-card h-100">
                     <div class="dash-card-icon bg-success-soft">
                         <i class="bi bi-whatsapp text-success"></i>
                     </div>
@@ -82,9 +96,9 @@
                 </div>
             </div>
 
-            <!-- Inscription Card -->
+            <!-- Carte 3 : Date d'inscription -->
             <div class="col-md-6 col-lg-4">
-                <div class="dash-card">
+                <div class="dash-card h-100">
                     <div class="dash-card-icon bg-warning-soft">
                         <i class="bi bi-calendar-check text-warning"></i>
                     </div>
@@ -103,9 +117,11 @@
             </div>
         </div>
 
-        <!-- Status & Motivation -->
+        <!-- ======================================================================= -->
+        <!-- 3. STATUT DU COMPTE ET CITATION DE MOTIVATION                          -->
+        <!-- ======================================================================= -->
         <div class="row g-4">
-            <!-- Status Card -->
+            <!-- Statut du compte -->
             <div class="col-lg-5">
                 <div class="dash-card h-100">
                     <h5 class="dash-card-title mb-4">
@@ -132,7 +148,7 @@
                 </div>
             </div>
 
-            <!-- Quote Card -->
+            <!-- Citation inspirante -->
             <div class="col-lg-7">
                 <div class="dash-card dash-card-quote h-100">
                     <div class="quote-decoration">
@@ -143,8 +159,8 @@
                     </p>
                     <div class="quote-author">— Steve Jobs, Co-fondateur d'Apple</div>
                     <div class="quote-cta mt-4">
-                        <a href="{% url 'accueil' %}" class="btn ctc-btn-primary">
-                            <i class="bi bi-book me-2"></i>Découvrir les ressources
+                        <a href="{% url 'liste_devoirs' %}" class="btn ctc-btn-primary">
+                            <i class="bi bi-journal-check me-2"></i>Mes évaluations
                         </a>
                         <a href="{% url 'deconnexion' %}" class="btn ctc-btn-outline ms-2">
                             <i class="bi bi-box-arrow-right me-2"></i>Déconnexion

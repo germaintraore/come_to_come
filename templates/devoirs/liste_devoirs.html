@@ -1,21 +1,125 @@
-{% extends "base.html" %} {% block title %}Mes Devoirs & Evaluations Come To Come {% endblock %} {% block content %}
-<div class="container">
-    <h2 class="text-center">Mes Devoirs & Evaluations Come To Come </h2>
-    {% for item in devoir_utilisateur %}
+{% extends "base.html" %}
+{% load static %}
 
-    <h3 class="text-center">{{ item.devoir.titre | default_if_none:" Aucun devoir disponibles" }}</h3>
+{% block title %}Mes Devoirs & Évaluations – Come To Code{% endblock %}
 
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
 
-    <p class="text-end text-info">Niveau:{{ item.devoir.get_formation_display | default_if_none:"-" }}</p>
-    <p class="text-center text-info">Session:{{ item.devoir.get_session_display | default_if_none:"-" }}</p>
+        <!-- ======================================================================= -->
+        <!-- 1. EN-TÊTE DE LA PAGE DES DEVOIRS                                       -->
+        <!-- ======================================================================= -->
+        <div class="admin-header mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <div class="admin-badge mb-2">
+                        <i class="bi bi-mortarboard-fill me-2"></i>Espace Pédagogique
+                    </div>
+                    <h1 class="admin-title mb-1">Mes Devoirs & Évaluations</h1>
+                    <p class="text-white-50 mb-0">
+                        Retrouvez ici tous les QCM et tests pratiques assignés à votre session.
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'tableau_de_bord' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Retour à mon espace
+                    </a>
+                </div>
+            </div>
+        </div>
 
-    {% if item.soumission %}
-    <p class="text-center text-info">{{ item.soumission.note |floatformat:0 | default_if_none:"-" }}/
-        {{ item.devoir.total_questions | default_if_none:"-" }}</p>
-    <a href="{% url 'resultat_devoir' item.devoir.id %}">Voir correction </a> {% else %}
-    <a href="{% url 'passer_devoir' item.devoir.id %}">Commencer le devoir {{item.devoir.id}}</a> {% endif %}
-    <br> {% empty %}
-    <p class="text-center">Aucun devoir disponible pour le moment. Reviens plus tard pour plus de défis!</p>
-    {% endfor %}
+        <!-- ======================================================================= -->
+        <!-- 2. LISTE DES DEVOIRS SOUS FORME DE CARTES MODERNES                      -->
+        <!-- ======================================================================= -->
+        {% if devoir_utilisateur %}
+        <div class="row g-4">
+            {% for item in devoir_utilisateur %}
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card h-100 d-flex flex-column justify-content-between p-4" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);">
+                    
+                    <!-- Partie supérieure de la carte -->
+                    <div>
+                        <!-- Badges formation & statut -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">
+                                {{ item.devoir.get_formation_display }}
+                            </span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                {{ item.devoir.get_session_display }}
+                            </span>
+                        </div>
+
+                        <!-- Titre du devoir -->
+                        <h4 class="text-white fw-bold mb-2">{{ item.devoir.titre }}</h4>
+                        
+                        {% if item.devoir.description %}
+                        <p class="text-white-50 small mb-3">
+                            {{ item.devoir.description|truncatewords:20 }}
+                        </p>
+                        {% endif %}
+
+                        <!-- Détails techniques (questions, date) -->
+                        <div class="d-flex flex-column gap-1 text-white-50 small mb-3">
+                            <div>
+                                <i class="bi bi-card-checklist text-primary me-2"></i>{{ item.devoir.total_questions }} Question(s)
+                            </div>
+                            <div>
+                                <i class="bi bi-calendar3 text-info me-2"></i>Créé le {{ item.devoir.date_creation|date:"d/m/Y" }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partie inférieure : Statut et Bouton d'action -->
+                    <div class="pt-3 border-top border-secondary border-opacity-25 mt-3">
+                        {% if item.soumission %}
+                        <!-- Cas 1 : Devoir déjà soumis -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-white-50 small">Votre note :</span>
+                            <span class="fs-5 fw-bold text-success">
+                                {{ item.soumission.note|floatformat:0 }} / {{ item.devoir.total_questions }}
+                            </span>
+                        </div>
+                        <a href="{% url 'resultat_devoir' item.devoir.id %}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-eye-fill me-1"></i>Voir la correction
+                        </a>
+                        {% else %}
+                        <!-- Cas 2 : Devoir pas encore passé -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
+                                <i class="bi bi-clock-history me-1"></i>Non réalisé
+                            </span>
+                            <span class="text-white-50 small">1 seule tentative</span>
+                        </div>
+                        <a href="{% url 'passer_devoir' item.devoir.id %}" class="btn btn-primary w-100">
+                            <i class="bi bi-play-circle-fill me-1"></i>Commencer l'évaluation
+                        </a>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- =================================================================== -->
+        <!-- 3. ÉTAT VIDE (Si aucun devoir disponible)                           -->
+        <!-- =================================================================== -->
+        <div class="admin-table-card p-5 text-center my-4">
+            <div class="mb-3">
+                <i class="bi bi-journal-x display-3 text-white-50"></i>
+            </div>
+            <h4 class="text-white mb-2">Aucun devoir disponible pour le moment</h4>
+            <p class="text-white-50 mb-4">
+                Vos formateurs publieront bientôt de nouveaux devoirs pour votre session. Reviens plus tard pour tester tes compétences !
+            </p>
+            <a href="{% url 'tableau_de_bord' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left me-1"></i>Retourner au tableau de bord
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
 </div>
 {% endblock content %}
