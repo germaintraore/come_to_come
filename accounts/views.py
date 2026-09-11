@@ -1,6 +1,9 @@
 
 import csv
-import io
+import os
+import urllib.parse
+from django.core.files.storage import default_storage
+from django.conf import settings
 from django import forms
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
@@ -8,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils import timezone
-from .forms import InscriptionForm, ConnexionForm
+from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm
 from .models import Apprenant
 from devoirs.models import Devoir
 
@@ -482,6 +485,77 @@ def export_pdf(request):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+@login_required
+def diffusion_whatsapp(request):
+    """Générateur de messages WhatsApp ciblés par session avec support de pièce jointe."""
+    if not request.user.is_staff:
+        messages.error(request, "Accès réfusé.")
+        return redirect('tableau_de_bord')
+    destinataires = []
+    fichier_url = None
+    fichier_nom = None
+    fichier_est_image = False
+    if request.method == 'POST':
+        form = DiffusionWhatsAppForm(request.POST, request.FILES)
+        if form.is_valid():
+            session = form.cleaned_data['session']
+            formation = form.cleaned_data['formation']
+            template_message = form.cleaned_data['message']
+            piece_jointe = form.cleaned_data.get('piece_jointe')
+            # 1. Gestion de la pièce jointe (Image ou PDF)
+            if piece_jointe:
+                fichier_nom = piece_jointe.name
+                # Sauvegarde dans media/whatsapp_pieces_jointes/
+                chemin_relatif = os.path.join('whatsapp_pieces_jointes', piece_jointe.name)
+                chemin_sauvegarde = default_storage.save(chemin_relatif, piece_jointe)
+                # URL absolue accessible depuis internet
+                fichier_url = request.build_absolute_uri(settings.MEDIA_URL + chemin_sauvegarde)
+                
+                # Vérifier si c'est une image
+                extensions_image = ('.jpg', '.jpeg', '.png', '.webp')
+                fichier_est_image = any(piece_jointe.name.lower().endswith(ext) for ext in extensions_image)
+            # 2. Récupérer les apprenants ciblés
+            apprenants = Apprenant.objects.filter(session=session, is_active=True)
+            if formation:
+                apprenants = apprenants.filter(formation=formation)
+            apprenants = apprenants.order_by('nom', 'prenom')
+            # 3. Préparer les messages personnalisés
+            for a in apprenants:
+                # Remplacement des balises personnalisées
+                texte_perso = template_message.format(
+                    prenom=a.prenom,
+                    nom=a.nom,
+                    formation=a.get_formation_display(),
+                    session=a.get_session_display()
+                )
+                # Si une pièce jointe a été ajoutée, on insère le lien au message
+                if fichier_url:
+                    emoji = "🖼️ Image" if fichier_est_image else "📄 Document PDF"
+                    texte_perso += f"\n\n{emoji} joint : {fichier_url}"
+                # Nettoyage du numéro de téléphone WhatsApp
+                numero_clean = a.whatsapp.replace(' ', '').replace('+', '').replace('-', '')
+                
+                # Encodage URL pour le lien WhatsApp
+                message_encode = urllib.parse.quote(texte_perso)
+                lien_whatsapp = f"https://wa.me/{numero_clean}?text={message_encode}"
+                destinataires.append({
+                    'apprenant': a,
+                    'message_texte': texte_perso,
+                    'lien_whatsapp': lien_whatsapp,
+                })
+            if not apprenants.exists():
+                messages.warning(request, "Aucun apprenant actif trouvé pour les critères sélectionnés.")
+    else:
+        form = DiffusionWhatsAppForm()
+    return render(request, 'accounts/diffusion_whatsapp.html', {
+        'form': form,
+        'destinataires': destinataires,
+        'total_destinataires': len(destinataires),
+        'fichier_url': fichier_url,
+        'fichier_nom': fichier_nom,
+        'fichier_est_image': fichier_est_image,
+    })
 
 
 

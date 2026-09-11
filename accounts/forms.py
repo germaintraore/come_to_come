@@ -116,3 +116,42 @@ class ConnexionForm(forms.Form):
 
     def get_user(self):
         return self.apprenant_cache
+
+# accounts/forms.py
+
+class DiffusionWhatsAppForm(forms.Form):
+    """Formulaire de diffusion WhatsApp par session avec pièce jointe (Image/PDF)."""
+    
+    session = forms.ChoiceField(
+        choices=Apprenant.SESSION_MOIS_CHOICES,
+        label="Session ciblée",
+        widget=forms.Select(attrs={'class': 'form-control form-control-lg'})
+    )
+    
+    formation = forms.ChoiceField(
+        choices=[('', 'Toutes les formations')] + Apprenant.FORMATION_CHOICES,
+        required=False,
+        label="Type de formation (optionnel)",
+        widget=forms.Select(attrs={'class': 'form-control form-control-lg'})
+    )
+    
+    message = forms.CharField(
+        label="Message à envoyer",
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': "Bonjour {prenom},\n\nNous vous rappelons que la séance de {formation} aura lieu demain.\n\nCordialement,\n2S Informatique Plus"
+        }),
+        help_text="Variables disponibles : {prenom}, {nom}, {formation}, {session}."
+    )
+    
+    piece_jointe = forms.FileField(
+        required=False,
+        label="Pièce jointe (Image ou PDF)",
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf, .jpeg, .png'
+        }),
+        help_text="Formats acceptés : PDF, JPG, PNG (Max 10 Mo)."
+    )
+

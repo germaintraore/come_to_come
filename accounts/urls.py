@@ -17,5 +17,6 @@ urlpatterns = [
     path('admin-panel/supprimer/<int:pk>/', views.supprimer_apprenant, name='supprimer_apprenant'),
     path('admin-panel/reaffecter/<int:pk>/', views.reaffecter_apprenant, name='reaffecter_apprenant'),
     path('admin-panel/export-pdf/', views.export_pdf, name='export_pdf'),
+    path('admin-panel/diffusion-whatsapp/', views.diffusion_whatsapp, name='diffusion_whatsapp'),
 
 ]
