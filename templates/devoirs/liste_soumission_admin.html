@@ -12,7 +12,7 @@
         <!-- ======================================================================= -->
         <div class="admin-header mb-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                
+
                 <!-- Titre et informations sur le devoir -->
                 <div>
                     <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm mb-2">
@@ -20,10 +20,12 @@
                     </a>
                     <h1 class="admin-title text-white mb-1">Résultats : {{ devoir.titre }}</h1>
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-                        <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-3 py-1.5 fs-6">
+                        <span
+                            class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-3 py-1.5 fs-6">
                             Formation : {{ devoir.get_formation_display }}
                         </span>
-                        <span class="badge bg-primary bg-opacity-15 text-primary border border-primary border-opacity-25 px-3 py-1.5 fs-6">
+                        <span
+                            class="badge bg-primary bg-opacity-15 text-primary border border-primary border-opacity-25 px-3 py-1.5 fs-6">
                             Session : {{ devoir.get_session_display }}
                         </span>
                     </div>
@@ -31,14 +33,18 @@
 
                 <!-- Badges récapitulatifs (Total participants + Moyenne) -->
                 <div class="d-flex flex-wrap gap-3">
-                    <div class="p-3 rounded-3 text-center" style="background: var(--surface-2); border: 1px solid var(--border); min-width: 140px;">
+                    <div class="p-3 rounded-3 text-center"
+                        style="background: var(--surface-2); border: 1px solid var(--border); min-width: 140px;">
                         <span class="text-white-50 small d-block mb-1">Participants</span>
-                        <strong class="text-white fs-4"><i class="bi bi-people-fill text-primary me-2"></i>{{ total_soumissions }}</strong>
+                        <strong class="text-white fs-4"><i class="bi bi-people-fill text-primary me-2"></i>{{
+                            total_soumissions }}</strong>
                     </div>
                     {% if moyenne is not None %}
-                    <div class="p-3 rounded-3 text-center" style="background: var(--surface-2); border: 1px solid var(--border); min-width: 170px;">
+                    <div class="p-3 rounded-3 text-center"
+                        style="background: var(--surface-2); border: 1px solid var(--border); min-width: 170px;">
                         <span class="text-white-50 small d-block mb-1">Moyenne de la classe</span>
-                        <strong class="text-success fs-4"><i class="bi bi-calculator me-2"></i>{{ moyenne }} / {{ devoir.total_questions }}</strong>
+                        <strong class="text-success fs-4"><i class="bi bi-calculator me-2"></i>{{ moyenne }} / {{
+                            devoir.total_questions }}</strong>
                     </div>
                     {% endif %}
                 </div>
@@ -50,8 +56,9 @@
         <!-- 2. TABLEAU DES ÉLÈVES AYANT COMPOSÉ                                     -->
         <!-- ======================================================================= -->
         <div class="admin-table-card shadow-lg">
-            
-            <div class="admin-table-header d-flex justify-content-between align-items-center p-3 border-bottom border-secondary border-opacity-25">
+
+            <div
+                class="admin-table-header d-flex justify-content-between align-items-center p-3 border-bottom border-secondary border-opacity-25">
                 <h5 class="mb-0 text-white fw-bold">
                     <i class="bi bi-list-check me-2 text-primary"></i>Élèves ayant composé ce devoir
                 </h5>
@@ -76,20 +83,16 @@
                     <tbody>
                         {% for s in soumissions %}
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            
+
                             <!-- 1. Nom de l'apprenant avec Avatar -->
                             <td style="padding: 1.2rem 1rem;">
                                 <div class="d-flex align-items-center gap-3">
-                                    <!-- Avatar rond avec les 2 initiales uniquement (ex: CO pour Chérif OUEDRAOGO) -->
-                                    <div class="mini-avatar flex-shrink-0" style="width: 42px; height: 42px; font-size: 0.95rem; line-height: 42px; text-align: center;">
-                                        {{ s.apprenant.prenom|first|upper }}{{ s.apprenant.nom|first|upper }}
+                                    <div class="mini-avatar" style="width: 42px; height: 42px; font-size: 1rem;">
+                                        {{ s.apprenant.prenom}}{{ s.apprenant.nom }}
                                     </div>
-                                    <!-- Nom complet et date d'inscription bien visibles -->
                                     <div>
-                                        <div class="fw-bold text-white fs-6 text-nowrap">{{ s.apprenant.nom_complet }}</div>
-                                        <div class="small text-nowrap" style="color: #94a3b8;">
-                                            <i class="bi bi-calendar-event me-1"></i>Inscrit le : {{ s.apprenant.date_inscription|date:"d/m/Y"|default:"-" }}
-                                        </div>
+                                        <div class="fw-bold text-white fs-6">{{ s.apprenant.nom_complet }}</div>
+
                                     </div>
                                 </div>
                             </td>
@@ -106,7 +109,8 @@
 
                             <!-- 3. Note obtenue -->
                             <td style="padding: 1.2rem 1rem;">
-                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-50 px-3 py-2 fs-6 fw-bold">
+                                <span
+                                    class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-50 px-3 py-2 fs-6 fw-bold">
                                     <i class="bi bi-award me-1"></i>{{ s.note }} / {{ devoir.total_questions }}
                                 </span>
                             </td>
@@ -127,12 +131,15 @@
 
                             <!-- 5. Date et Heure de passage du devoir (Boîtier contrasté haute visibilité) -->
                             <td style="padding: 1.2rem 1rem;">
-                                <div class="p-2.5 rounded-3 d-inline-block" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15); min-width: 150px;">
+                                <div class="p-2.5 rounded-3 d-inline-block"
+                                    style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15); min-width: 150px;">
                                     <div class="fw-bold text-white fs-6 mb-0.5">
-                                        <i class="bi bi-calendar3 text-info me-1.5"></i>{{ s.date_soumission|date:"d/m/Y"|default:"Non renseignée" }}
+                                        <i class="bi bi-calendar3 text-info me-1.5"></i>{{
+                                        s.date_soumission|date:"d/m/Y"|default:"Non renseignée" }}
                                     </div>
                                     <div class="small fw-semibold" style="color: #67e8f9;">
-                                        <i class="bi bi-clock-fill text-warning me-1.5"></i>{{ s.date_soumission|date:"H:i" }}
+                                        <i class="bi bi-clock-fill text-warning me-1.5"></i>{{
+                                        s.date_soumission|date:"H:i" }}
                                     </div>
                                 </div>
                             </td>
@@ -150,7 +157,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             {% else %}
             <!-- ============================================================ -->
             <!-- 3. ÉTAT VIDE (Si aucun élève n'a encore composé)             -->
@@ -159,7 +166,8 @@
                 <i class="bi bi-inbox display-3 d-block mb-3 opacity-50 text-white-50"></i>
                 <h4 class="text-white">Aucun élève n'a encore composé ce devoir.</h4>
                 <p class="text-white-50 mb-0">
-                    Les résultats et les dates de passage apparaîtront automatiquement dès qu'un apprenant aura validé son devoir.
+                    Les résultats et les dates de passage apparaîtront automatiquement dès qu'un apprenant aura validé
+                    son devoir.
                 </p>
             </div>
             {% endif %}
