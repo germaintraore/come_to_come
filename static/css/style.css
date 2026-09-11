@@ -806,27 +806,33 @@ a:hover { text-decoration: none; }
 
 .ctc-table {
   margin: 0;
-  color: #e2e8f0;
+  color: #f8fafc !important;
+  --bs-table-color: #f8fafc !important;
+  --bs-table-bg: transparent !important;
+  --bs-table-hover-color: #ffffff !important;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.04) !important;
+  --bs-table-border-color: rgba(255, 255, 255, 0.08) !important;
 }
 .ctc-table thead th {
-  background: var(--surface-2);
-  color: var(--text-muted);
-  font-size: .78rem;
+  background: var(--surface-2) !important;
+  color: #94a3b8 !important;
+  font-size: .82rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
-  padding: .9rem 1.25rem;
+  padding: 1rem 1.25rem;
   border: none;
   white-space: nowrap;
 }
 .ctc-table tbody td {
-  padding: 1rem 1.25rem;
-  border-color: var(--border);
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   vertical-align: middle;
-  font-size: .9rem;
+  font-size: .95rem;
+  color: #f8fafc !important;
 }
 .ctc-table tbody tr { transition: background .15s; }
-.ctc-table tbody tr:hover { background: rgba(255,255,255,.02); }
+.ctc-table tbody tr:hover { background: rgba(255,255,255,.04) !important; }
 .ctc-table tbody tr.row-inactive { opacity: .55; }
 
 .apprenant-avatar-cell { display: flex; align-items: center; gap: .75rem; }
