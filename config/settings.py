@@ -78,31 +78,29 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-DATABASE_URL=os.environ.get('DATABASE_URL')
+DATABASE_URL = get_env('DATABASE_URL') or os.environ.get('DATABASE_URL')
 if DATABASE_URL:
-    DATABASES={
-        'default': dj_database_url.config   (
-            default=DATABASE_URL,
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
             conn_max_age=600,
-            conn_health_checks=True
-            
+            conn_health_checks=True,
         )
     }
 else:
     # ============================================================
-    # BASE DE DONNEES - PostgreSQL
-        # ============================================================
-    # Configurable via le fichier .env (voir .env.example)
+    # BASE DE DONNEES - PostgreSQL (Local)
+    # ============================================================
     DATABASES = {
-    'default': {
-        'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     get_env('DB_NAME', 'come_to_code_db'),
-        'USER':     get_env('DB_USER', 'postgres'),
-        'PASSWORD': get_env('DB_PASSWORD', 'postgres'),
-        'HOST':     get_env('DB_HOST', 'localhost'),
-        'PORT':     get_env('DB_PORT', '5432'),
+        'default': {
+            'ENGINE':   'django.db.backends.postgresql',
+            'NAME':     get_env('DB_NAME', 'come_to_code_db'),
+            'USER':     get_env('DB_USER', 'postgres'),
+            'PASSWORD': get_env('DB_PASSWORD', 'postgres'),
+            'HOST':     get_env('DB_HOST', 'localhost'),
+            'PORT':     get_env('DB_PORT', '5432'),
+        }
     }
-}
         
 # Sécurité automatique en production
 if not DEBUG:
