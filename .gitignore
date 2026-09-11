@@ -13,6 +13,8 @@ media/
 backups/*.sql
 backups/*.dump
 backups/*.json
+data_backup.json
+*.json
 
 # IDE
 .vscode/
