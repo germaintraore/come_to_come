@@ -473,14 +473,19 @@ def liste_soumission_devoir(request, pk):
     soumissions=devoir.soumissions.select_related('apprenant').order_by('-date_soumission')
     total_soumissions=soumissions.count()
     moyenne=None
-    if total_soumissions  > 0:
-        moyenne=round(sum(s.note for s in soumissions )/total_soumissions,2)
-        return render(request,
+    if total_soumissions > 0:
+        moyenne = round(sum(s.note for s in soumissions) / total_soumissions, 2)
+    
+    return render(
+        request,
         'devoirs/liste_soumission_admin.html',
-        {'devoir':devoir,
-        'soumissions':soumissions,
-        'total_soumissions':total_soumissions,
-        'moyenne':moyenne,})
+        {
+            'devoir': devoir,
+            'soumissions': soumissions,
+            'total_soumissions': total_soumissions,
+            'moyenne': moyenne,
+        }
+    )
 
 @login_required
 def detail_soumission_admin(request,pk):
