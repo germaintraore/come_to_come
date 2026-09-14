@@ -1,3 +1,4 @@
+import os
 from django.core.management.base import BaseCommand
 from accounts.models import Apprenant
 
@@ -6,21 +7,24 @@ class Command(BaseCommand):
     help = "Cree ou met a jour le compte administrateur par defaut"
 
     def add_arguments(self, parser):
+        default_whatsapp = os.environ.get('DJANGO_SUPERUSER_WHATSAPP') or os.environ.get('ADMIN_WHATSAPP', '70445566')
+        default_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD') or os.environ.get('ADMIN_PASSWORD', 'Admin12345')
+
         parser.add_argument(
             '--whatsapp',
             type=str,
-            default='70445566',
-            help="Numero WhatsApp de l'administrateur (par defaut: 70445566)"
+            default=default_whatsapp,
+            help=f"Numero WhatsApp de l'administrateur (par defaut: {default_whatsapp})"
         )
         parser.add_argument(
             '--password',
             type=str,
-            default='Admin12345',
-            help="Mot de passe de l'administrateur (par defaut: Admin12345)"
+            default=default_password,
+            help="Mot de passe de l'administrateur (par defaut: defini par variable d'environnement ou 'Admin12345')"
         )
 
     def handle(self, *args, **options):
-        whatsapp = options['whatsapp']
+        whatsapp = (options['whatsapp'] or '').strip()
         password = options['password']
 
         admin, created = Apprenant.objects.get_or_create(

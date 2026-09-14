@@ -60,6 +60,8 @@ class InscriptionForm(forms.ModelForm):
 
     def clean_whatsapp(self):
         whatsapp = self.cleaned_data.get('whatsapp')
+        if whatsapp:
+            whatsapp = whatsapp.strip()
         if Apprenant.objects.filter(whatsapp=whatsapp).exists():
             raise forms.ValidationError("Ce numéro WhatsApp est déjà enregistré.")
         return whatsapp
@@ -99,6 +101,10 @@ class ConnexionForm(forms.Form):
     def clean(self):
         whatsapp = self.cleaned_data.get('whatsapp')
         password = self.cleaned_data.get('password')
+
+        if whatsapp:
+            whatsapp = whatsapp.strip()
+            self.cleaned_data['whatsapp'] = whatsapp
 
         if whatsapp and password:
             self.apprenant_cache = authenticate(
