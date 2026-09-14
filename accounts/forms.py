@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate
-from .models import Apprenant
+from .models import Apprenant,Formation
 
 
 class InscriptionForm(forms.ModelForm):
@@ -50,6 +50,26 @@ class InscriptionForm(forms.ModelForm):
                 'class': 'form-control form-control-lg',
             }),
         }
+    
+    def __init__(self, *args, **kwargs):
+        """
+        Charger les formations depuis la base de données 
+        """
+        super().__init__(*args, **kwargs)
+
+        # --- 1. Récupération des formations actives ---
+        # Utilise la méthode de classe ajoutée au modèle pour plus de propreté
+        # Si la table est vide, on garde la valeur par défaut 'initiation'
+        self.fields['formation'].widget = forms.Select(
+            choices=Formation.get_choices(only_active=True),
+            attrs={
+                'class': 'form-control form-control-lg',
+            }
+        )
+
+        # Si par défaut le champ est vide, on force l'option par défaut
+        if not self.fields['formation'].initial:
+             self.fields['formation'].initial = 'initiation'
 
     def clean_password2(self):
         p1 = self.cleaned_data.get('password1')
@@ -135,9 +155,8 @@ class DiffusionWhatsAppForm(forms.Form):
     )
     
     formation = forms.ChoiceField(
-        choices=[('', 'Toutes les formations')] + Apprenant.FORMATION_CHOICES,
-        required=False,
-        label="Type de formation (optionnel)",
+        required=True,
+        label="Type de formation *",
         widget=forms.Select(attrs={'class': 'form-control form-control-lg'})
     )
     
@@ -160,4 +179,32 @@ class DiffusionWhatsAppForm(forms.Form):
         }),
         help_text="Formats acceptés : PDF, JPG, PNG (Max 10 Mo)."
     )
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['formation'].choices=[('','Toutes les formations disponibles ')]+ Formation.get_choices(only_active=False)
+    
+class FormationForm(forms.ModelForm):
+    """Formulaire pour créer ou modifier une formation."""
+    class Meta:
+        model = Formation
+        fields = ['code', 'nom', 'description', 'est_active']
+        widgets = {
+            'code': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'ex: dev-web, bureautique (sans espaces)',
+            }),
+            'nom': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Nom complet de la formation',
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Description sommaire des objectifs...',
+            }),
+            'est_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+        }
+
 

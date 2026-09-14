@@ -1,6 +1,6 @@
 import os
 from django.core.management.base import BaseCommand
-from accounts.models import Apprenant
+from accounts.models import Apprenant,Formation
 
 
 class Command(BaseCommand):
@@ -58,3 +58,15 @@ class Command(BaseCommand):
                     f"[OK] Administrateur existant mis a jour avec succes ! (WhatsApp: {whatsapp})"
                 )
             )
+        
+        # Initialiser les formations par défaut si la table est vide
+        formations_initiales = [
+            ('initiation', 'Initiation en informatique', 'Découverte générale de l\'informatique'),
+        ]
+        for code, nom, desc in formations_initiales:
+            f, created = Formation.objects.get_or_create(
+                code=code,
+                defaults={'nom': nom, 'description': desc, 'est_active': True}
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f"[OK] Formation créée : {nom}")) 

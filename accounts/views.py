@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.utils import timezone
 from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm
-from .models import Apprenant
+from .models import Apprenant,Formation
 from devoirs.models import Devoir
 
 
@@ -28,7 +28,6 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 class AdminFiltreForm(forms.Form):
     """Formulaire de filtrage pour le panneau d'administration."""
     formation = forms.ChoiceField(
-        choices=[('', 'Toutes les formations')] + Apprenant.FORMATION_CHOICES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-control filter-select', 'onchange': 'this.form.submit()'})
     )
@@ -37,6 +36,9 @@ class AdminFiltreForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={'class': 'form-control filter-select', 'onchange': 'this.form.submit()'})
     )
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['formation'].choices = [('','Toutes les formations disponibles ')] + Formation.get_choices(only_active=False)
 
 
 def accueil(request):
@@ -221,10 +223,9 @@ def _get_filtree_queryset(request):
 
 
 def _label_formation(code):
-    for val, label in Apprenant.FORMATION_CHOICES:
-        if val == code:
-            return label
-    return code
+    formation_obj=Formation.objects.filter(code=code).first()
+    return formation_obj.nom if formation_obj else code
+    
 
 
 def _label_session(code):

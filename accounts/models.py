@@ -3,6 +3,50 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.utils import timezone
 
 
+
+class Formation(models.Model):
+    """Représente une formation gérée dynamiquement par l'administrateur."""
+    
+    code = models.SlugField(
+        max_length=50, 
+        unique=True, 
+        verbose_name="Code / Identifiant (ex: dev-web, bureautique)",
+        help_text="Identifiant unique sans espaces ni caractères spéciaux"
+    )
+    nom = models.CharField(
+        max_length=150, 
+        verbose_name="Nom complet de la formation"
+    )
+    description = models.TextField(
+        blank=True, 
+        verbose_name="Description de la formation"
+    )
+    est_active = models.BooleanField(
+        default=True, 
+        verbose_name="Formation active (visible aux inscriptions)"
+    )
+    date_creation = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name="Date de création"
+    )
+
+    class Meta:
+        db_table = 'formation'
+        verbose_name = 'Formation'
+        verbose_name_plural = 'Formations'
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+
+    @classmethod
+    def get_choices(cls, only_active=True):
+        """Retourne la liste des tuples (code, nom) pour les formulaires Django."""
+        qs = cls.objects.filter(est_active=True) if only_active else cls.objects.all()
+        choices = [(f.code, f.nom) for f in qs]
+        # Si la table est encore vide, on donne une valeur de secours
+        return choices if choices else [('initiation', 'Initiation en informatique')]
+
 class ApprenantManager(BaseUserManager):
     """Gestionnaire personnalisé pour le modèle Apprenant."""
 
@@ -22,18 +66,13 @@ class ApprenantManager(BaseUserManager):
         return self.create_user(whatsapp, password, **extra_fields)
 
 
+
 class Apprenant(AbstractBaseUser, PermissionsMixin):
     """
     Modèle principal représentant un apprenant de la plateforme.
     L'authentification se fait via le numéro WhatsApp.
     """
-
-    FORMATION_CHOICES = [
-        ('bureautique', 'Formation en bureautique'),
-        ('maintenance', 'Formation en maintenance'),
-        ('reseau', 'Formation en réseau'),
-        ('initiation', 'Initiation en informatique'),
-    ]
+    
 
     SESSION_MOIS_CHOICES = [
         ('janvier', 'Janvier'),
@@ -60,7 +99,6 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     )
     formation = models.CharField(
         max_length=50,
-        choices=FORMATION_CHOICES,
         verbose_name="Type de formation",
         default='initiation',
     )
@@ -94,3 +132,9 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     @property
     def nom_complet(self):
         return f"{self.prenom} {self.nom}"
+    
+    def get_formation_display(self):
+        formation_obj = Formation.objects.filter(code=self.formation).first()
+        return formation_obj.nom if formation_obj else self.formation
+
+    

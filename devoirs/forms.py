@@ -1,5 +1,6 @@
 from django import forms
 from .models import Devoir, Question
+from accounts.models import Formation
 
 
 class DevoirForm(forms.ModelForm):
@@ -74,8 +75,24 @@ class DupliquerDevoirForm(forms.ModelForm):
         model = Devoir
         fields = ['titre', 'formation', 'session']
         widgets = {
-            'titre': forms.TextInput(attrs={'class': 'form-control'}),
-            'formation': forms.Select(attrs={'class': 'form-select'}),
-            'session': forms.Select(attrs={'class': 'form-select'}),
+            'titre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Donnez le titre du devoir',
+            }),
+            'formation': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'session': forms.Select(attrs={
+                'class': 'form-control',
+            }),
+            
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['formation'].widget = forms.Select(
+            choices=Formation.get_choices(only_active=True),
+            attrs={'class': 'form-select'}
+        )
 
+
+    
