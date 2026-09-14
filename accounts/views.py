@@ -1,17 +1,18 @@
 
 import csv
 import os
+import io
 import urllib.parse
 from django.core.files.storage import default_storage
 from django.conf import settings
 from django import forms
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils import timezone
-from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm
+from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm,FormationForm
 from .models import Apprenant,Formation
 from devoirs.models import Devoir
 
@@ -557,6 +558,86 @@ def diffusion_whatsapp(request):
         'fichier_nom': fichier_nom,
         'fichier_est_image': fichier_est_image,
     })
+
+@admin_required
+def liste_formations(request):
+    """Affiche toutes les formations, leurs statistiques et gère l'ajout d'une nouvelle."""
+    formations = Formation.objects.all().order_by('nom')
+    
+    # On attache les compteurs d'apprenants et de devoirs pour chaque formation
+    for f in formations:
+        f.nb_apprenants = Apprenant.objects.filter(formation=f.code, is_staff=False).count()
+        f.nb_devoirs = Devoir.objects.filter(formation=f.code).count()
+
+    form = FormationForm()
+    if request.method == 'POST':
+        form = FormationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"La formation '{form.cleaned_data['nom']}' a été créée avec succès !")
+            return redirect('liste_formations')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+
+    context = {
+        'formations': formations,
+        'form': form,
+        'total_formations': formations.count(),
+        'actives': formations.filter(est_active=True).count(),
+    }
+    return render(request, 'accounts/admin_formations.html', context)
+
+
+@admin_required
+def modifier_formation(request, pk):
+    """Modifier les détails d'une formation existante."""
+    formation = get_object_or_404(Formation, pk=pk)
+    if request.method == 'POST':
+        form = FormationForm(request.POST, instance=formation)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Formation '{formation.nom}' mise à jour avec succès.")
+            return redirect('liste_formations')
+    else:
+        form = FormationForm(instance=formation)
+
+    return render(request, 'accounts/modifier_formation.html', {
+        'form': form,
+        'formation': formation
+    })
+
+
+@admin_required
+def toggle_formation(request, pk):
+    """Activer ou désactiver rapidement une formation."""
+    formation = get_object_or_404(Formation, pk=pk)
+    formation.est_active = not formation.est_active
+    formation.save()
+    etat = "activée" if formation.est_active else "désactivée"
+    messages.info(request, f"La formation '{formation.nom}' est maintenant {etat}.")
+    return redirect('liste_formations')
+
+
+@admin_required
+def supprimer_formation(request, pk):
+    """Supprimer une formation (uniquement si aucun apprenant ni devoir n'y est rattaché)."""
+    formation = get_object_or_404(Formation, pk=pk)
+    nb_apprenants = Apprenant.objects.filter(formation=formation.code).count()
+    nb_devoirs = Devoir.objects.filter(formation=formation.code).count()
+
+    # Règle d'or de sécurité en BDD : intégrité référentielle
+    if nb_apprenants > 0 or nb_devoirs > 0:
+        messages.error(
+            request, 
+            f"Impossible de supprimer '{formation.nom}' car {nb_apprenants} apprenant(s) "
+            f"et {nb_devoirs} devoir(s) y sont rattachés. Désactivez-la plutôt !"
+        )
+    else:
+        nom = formation.nom
+        formation.delete()
+        messages.success(request, f"La formation '{nom}' a été supprimée définitivement.")
+
+    return redirect('liste_formations')
 
 
 

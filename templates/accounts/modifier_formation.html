@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier Formation – {{ formation.nom }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="auth-card p-4 rounded-3 bg-dark border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="text-white mb-0">
+                            <i class="bi bi-pencil-square text-primary me-2"></i>Modifier la Formation
+                        </h4>
+                        <a href="{% url 'liste_formations' %}" class="btn btn-sm btn-outline-secondary">Annuler</a>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-white small">Code unique</label>
+                            {{ form.code }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white small">Nom de la formation</label>
+                            {{ form.nom }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white small">Description</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="mb-4 form-check">
+                            {{ form.est_active }}
+                            <label class="form-check-label text-white small" for="{{ form.est_active.id_for_label }}">
+                                Formation active
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

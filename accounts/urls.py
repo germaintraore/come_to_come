@@ -19,4 +19,12 @@ urlpatterns = [
     path('admin-panel/export-pdf/', views.export_pdf, name='export_pdf'),
     path('admin-panel/diffusion-whatsapp/', views.diffusion_whatsapp, name='diffusion_whatsapp'),
 
+    # Gestion des Formations
+    path('admin-panel/formations/', views.liste_formations, name='liste_formations'),
+    path('admin-panel/formations/modifier/<int:pk>/', views.modifier_formation, name='modifier_formation'),
+    path('admin-panel/formations/toggle/<int:pk>/', views.toggle_formation, name='toggle_formation'),
+    path('admin-panel/formations/supprimer/<int:pk>/', views.supprimer_formation, name='supprimer_formation'),
+
+
+
 ]

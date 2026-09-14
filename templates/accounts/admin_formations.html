@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Formations – Come To Code{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- En-tête avec bouton retour -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-white fw-bold mb-1">
+                    <i class="bi bi-mortarboard-fill text-primary me-2"></i>Gestion des Formations
+                </h2>
+                <p class="text-white-50 mb-0">Créez et gérez les filières disponibles sur la plateforme</p>
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+            </a>
+        </div>
+
+        <!-- Statistiques rapides -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Total des formations</span>
+                            <h3 class="fw-bold mb-0 mt-1">{{ total_formations }}</h3>
+                        </div>
+                        <i class="bi bi-collection fs-1 text-primary opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Formations actives</span>
+                            <h3 class="fw-bold mb-0 mt-1 text-success">{{ actives }}</h3>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Formulaire d'ajout rapide (Colonne de gauche) -->
+            <div class="col-lg-4">
+                <div class="admin-table-card p-4 rounded-3 bg-dark border border-secondary border-opacity-25">
+                    <h5 class="text-white mb-3">
+                        <i class="bi bi-plus-circle-fill text-primary me-2"></i>Nouvelle Formation
+                    </h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-white small">Code unique (slug) *</label>
+                            {{ form.code }}
+                            <small class="text-white-50" style="font-size: 0.75rem;">Ex: <code>dev-web</code>,
+                                <code>bureautique</code> (sans espaces)</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white small">Nom complet *</label>
+                            {{ form.nom }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white small">Description (optionnelle)</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.est_active }}
+                            <label class="form-check-label text-white small" for="{{ form.est_active.id_for_label }}">
+                                Activer immédiatement cette formation
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-2">
+                            <i class="bi bi-check2-circle me-1"></i>Enregistrer la formation
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des formations (Colonne de droite) -->
+            <div class="col-lg-8">
+                <div
+                    class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden">
+                    <div class="p-3 border-bottom border-secondary border-opacity-25">
+                        <h5 class="text-white mb-0">Formations existantes ({{ formations|length }})</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead class="text-white-50 small">
+                                <tr>
+                                    <th>Nom & Code</th>
+                                    <th class="text-center">Inscrits</th>
+                                    <th class="text-center">Devoirs</th>
+                                    <th class="text-center">Statut</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for f in formations %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-white">{{ f.nom }}</div>
+                                        <code class="text-info small">{{ f.code }}</code>
+                                        {% if f.description %}
+                                        <div class="text-white-50 small text-truncate" style="max-width: 250px;">{{
+                                            f.description }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">
+                                            {{ f.nb_apprenants }} apprenant(s)
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25">
+                                            {{ f.nb_devoirs }} devoir(s)
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if f.est_active %}
+                                        <span
+                                            class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">Active</span>
+                                        {% else %}
+                                        <span
+                                            class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">Désactivée</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- Basculer statut -->
+                                            <a href="{% url 'toggle_formation' f.pk %}" class="btn btn-outline-warning"
+                                                title="Activer / Désactiver">
+                                                <i class="bi bi-power"></i>
+                                            </a>
+                                            <!-- Modifier -->
+                                            <a href="{% url 'modifier_formation' f.pk %}" class="btn btn-outline-info"
+                                                title="Modifier">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <!-- Supprimer -->
+                                            <a href="{% url 'supprimer_formation' f.pk %}"
+                                                class="btn btn-outline-danger" title="Supprimer"
+                                                onclick="return confirm('Voulez-vous vraiment supprimer définitivement cette formation ?');">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-white-50">
+                                        Aucune formation enregistrée pour le moment.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

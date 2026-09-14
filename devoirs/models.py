@@ -1,19 +1,21 @@
 from django.db import models
-from accounts.models import Apprenant
+from accounts.models import Apprenant,Formation
 
 
 class Devoir(models.Model):
     """Un devoir QCM lié à un type de formation."""
 
-    FORMATION_CHOICES = [
-        ('bureautique', 'Formation en bureautique'),
-        ('maintenance', 'Formation en maintenance'),
-        ('reseau', 'Formation en réseau'),
-        ('initiation', 'Initiation en informatique'),
-    ]
+  
+        # ...
+    def get_formation_display(self):
+        f = Formation.objects.filter(code=self.formation).first()
+        return f.nom if f else self.formation
 
     titre       = models.CharField(max_length=200, verbose_name="Titre du devoir")
-    formation   = models.CharField(max_length=50, choices=FORMATION_CHOICES, verbose_name="Formation concernée")
+    
+    formation=models.CharField(max_length=50,
+    verbose_name="Formation concernée",
+    default='initation en informatique')
     session = models.CharField(max_length=20,choices=Apprenant.SESSION_MOIS_CHOICES,
                 default='janvier',verbose_name="Session du devoir")
     description = models.TextField(blank=True, verbose_name="Description / consignes")
