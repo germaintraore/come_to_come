@@ -28,6 +28,12 @@ from django.contrib import messages
 from .models import Devoir ,Question,Soumission,ReponseApprenant
 from .forms import DevoirForm,QuestionForm  ,DupliquerDevoirForm
 
+
+def _est_formateur_ou_staff(user):
+    """Retourne True si l'utilisateur est staff OU formateur."""
+    return user.is_staff or user.is_superuser or user.is_formateur
+
+
 @login_required
 def liste_devoirs(request):
     devoir=Devoir.objects.filter(est_actif=True,formation=request.user.formation,session=request.user.session).order_by('-date_creation')
@@ -316,8 +322,8 @@ def telecharger_devoir_pdf(request, pk):
             Paragraph(f"<b>Session :</b> {devoir.get_session_display()}", body_style),
         ],
         [
-            Paragraph("<b>Formateur :</b> TRAORE Germain", body_style),
-            Paragraph("<b>Tél :</b> 07 27 34 11", body_style),
+            Paragraph(f"<b>Formateur :</b> {request.user.nom_complet}", body_style),
+            Paragraph(f"<b>Tél :</b> {request.user.whatsapp}", body_style),
         ]
     ]
 
@@ -464,11 +470,19 @@ def modifier_devoir(request, pk):
 @login_required
 def liste_soumission_devoir(request, pk):
     """Afficher la liste des apprénants ayant composé pour un devoir donné"""
-    if not request.user.is_staff:
-        messages.error(request,"Accès réfusé")
+    if not _est_formateur_ou_staff(request.user):
+        messages.error(request, "Accès réfusé")
         return redirect('tableau_de_bord')
     
-    devoir=get_object_or_404(Devoir,pk=pk)
+    devoir = get_object_or_404(Devoir, pk=pk)
+    
+    # Si c'est un formateur (pas staff), il ne peut voir que les devoirs de sa formation
+    if request.user.is_formateur and not request.user.is_staff:
+        formation_assignee = request.user.formation_assignee
+        if not formation_assignee or devoir.formation != formation_assignee.code:
+            messages.error(request, "Vous n'avez pas accès à ce devoir.")
+            return redirect('dashboard_formateur')
+    
     # recupère toutes les soummissions pour ce devoir avec les infos des apprenants
     soumissions=devoir.soumissions.select_related('apprenant').order_by('-date_soumission')
     total_soumissions=soumissions.count()
@@ -489,14 +503,20 @@ def liste_soumission_devoir(request, pk):
 
 @login_required
 def detail_soumission_admin(request,pk):
-    """Affiche les detailes et les reponses complètes d'un élève pour une soumission donnée"""
+    """Affiche les détails et les réponses complètes d'un élève pour une soumission donnée"""
 
-    if not request.user.is_staff:
-        messages.error(request,"Accès réfusé.")
+    if not _est_formateur_ou_staff(request.user):
+        messages.error(request, "Accès réfusé.")
         return redirect('tableau_de_bord')
 
     soumission = get_object_or_404(Soumission, pk=pk)
-    
+
+    # Formateur : vérifier que l'apprenant appartient bien à sa formation
+    if request.user.is_formateur and not request.user.is_staff:
+        formation_assignee = request.user.formation_assignee
+        if not formation_assignee or soumission.devoir.formation != formation_assignee.code:
+            messages.error(request, "Vous n'avez pas accès à cette soumission.")
+            return redirect('dashboard_formateur')
     devoir = soumission.devoir
     apprenant = soumission.apprenant
     reponses = soumission.reponses.select_related('question').order_by('question_id')

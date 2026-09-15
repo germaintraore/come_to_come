@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notes de {{ apprenant_cible.nom_complet }} — Espace Formateur{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- Bannière retour -->
+        <div class="mb-4">
+            <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+            </a>
+        </div>
+
+        <!-- En-tête formateur -->
+        <div class="welcome-banner p-4 rounded-4 mb-4 bg-dark border border-secondary border-opacity-25">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <span
+                        class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 px-3 py-2 mb-2">
+                        <i class="bi bi-person-badge me-1"></i>Espace Formateur
+                    </span>
+                    <h2 class="text-white fw-bold mb-1">
+                        Notes de <span class="text-info">{{ apprenant_cible.nom_complet }}</span>
+                    </h2>
+                    <p class="text-white-50 mb-0">
+                        Formation : <strong class="text-info">{{ formation.nom }}</strong>
+                        &nbsp;|&nbsp; Formateur : <strong class="text-white">{{ formateur.nom_complet }}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cartes Statistiques -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Devoirs soumis</span>
+                            <h3 class="fw-bold mb-0 mt-1 text-info">{{ total_devoirs }}</h3>
+                        </div>
+                        <i class="bi bi-journal-check fs-1 text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Moyenne générale</span>
+                            <h3
+                                class="fw-bold mb-0 mt-1 {% if moyenne >= 10 %}text-success{% else %}text-danger{% endif %}">
+                                {% if moyenne %}{{ moyenne }}{% else %}—{% endif %}
+                            </h3>
+                        </div>
+                        <i class="bi bi-graph-up fs-1 text-warning opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">WhatsApp</span>
+                            <h3 class="fw-bold mb-0 mt-1 fs-6 text-success">{{ apprenant_cible.whatsapp }}</h3>
+                        </div>
+                        <i class="bi bi-whatsapp fs-1 text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des notes -->
+        <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden">
+            <div class="p-3 border-bottom border-secondary border-opacity-25">
+                <h5 class="text-white mb-0">
+                    <i class="bi bi-clipboard-data text-primary me-2"></i>
+                    Résultats par devoir
+                </h5>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead class="text-white-50 small">
+                        <tr>
+                            <th>N°</th>
+                            <th>Devoir</th>
+                            <th>Session</th>
+                            <th class="text-center">Note obtenue</th>
+                            <th class="text-center">Total questions</th>
+                            <th>Date de soumission</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in soumissions %}
+                        <tr>
+                            <td class="text-white-50">{{ forloop.counter }}</td>
+                            <td class="fw-bold text-white">{{ s.devoir.titre }}</td>
+                            <td>
+                                <span class="badge bg-primary bg-opacity-25 text-primary">
+                                    {{ s.devoir.get_session_display }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if s.note >= s.devoir.total_questions|floatformat:0 %}
+                                <span class="badge bg-success fs-6 px-3 py-2">{{ s.note }}</span>
+                                {% elif s.note >= 5 %}
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2">{{ s.note }}</span>
+                                {% else %}
+                                <span class="badge bg-danger fs-6 px-3 py-2">{{ s.note }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center text-white-50">
+                                {{ s.devoir.total_questions }}
+                            </td>
+                            <td class="text-white-50 small">
+                                {{ s.date_soumission|date:"d/m/Y à H:i" }}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <!-- Voir la copie détaillée -->
+                                    <a href="{% url 'detail_soumission_admin' s.pk %}"
+                                        class="btn btn-sm btn-outline-info" title="Voir la copie">
+                                        <i class="bi bi-eye me-1"></i>Copie
+                                    </a>
+                                    <!-- Télécharger le PDF -->
+                                    <a href="{% url 'telecharger_devoir_pdf' s.devoir.pk %}"
+                                        class="btn btn-sm btn-outline-success" title="Télécharger le corrigé PDF">
+                                        <i class="bi bi-download me-1"></i>PDF
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-white-50">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                Cet apprenant n'a encore soumis aucun devoir.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
