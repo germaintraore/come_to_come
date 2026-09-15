@@ -72,8 +72,14 @@ def connexion(request):
         if form.is_valid():
             apprenant = form.get_user()
             login(request, apprenant)
-            messages.success(request, f"Bon retour {apprenant.nom_complet} !")
-            return redirect('tableau_de_bord')
+            if apprenant.is_staff or apprenant.is_superuser:
+                messages.success(request, f"Bon retour {apprenant.nom_complet} !")
+                return redirect('admin_dashboard')
+            elif apprenant.is_formateur:
+                return redirect('dashboard_formateur')
+            else:
+                messages.success(request, f"Bon retour {apprenant.nom_complet} !")
+                return redirect('tableau_de_bord')
         else:
             messages.error(request, "Identifiants incorrects. Veuillez reessayer.")
     else:
@@ -674,6 +680,44 @@ def liste_formateurs(request):
         'formateurs': formateurs,
         'form': form
     })
+
+@formateur_required
+def dashboard_formateur(request):
+    """Espace réservé au formateur : liste uniquement les apprenants de sa filière."""
+    formateur = request.user
+    formation = formateur.formation_assignee
+
+    if not formation:
+        messages.warning(request, "Aucune formation ne vous est actuellement assignée.")
+        return render(request, 'accounts/dashboard_formateur.html', {'apprenants': [], 'devoirs': []})
+
+    # Filtrer les apprenants de SA formation uniquement
+    apprenants = Apprenant.objects.filter(
+        formation=formation.code,
+        is_staff=False,
+        is_formateur=False
+    ).order_by('-date_inscription')
+
+    # Filtre optionnel par session
+    session = request.GET.get('session', '').strip()
+    if session:
+        apprenants = apprenants.filter(session=session)
+
+    # Récupérer les devoirs de SA formation
+    devoirs = Devoir.objects.filter(formation=formation.code).order_by('-date_creation')
+
+    context = {
+        'formateur': formateur,
+        'formation': formation,
+        'apprenants': apprenants,
+        'devoirs': devoirs,
+        'total_apprenants': apprenants.count(),
+        'actifs': apprenants.filter(is_active=True).count(),
+        'session_choices': Apprenant.SESSION_MOIS_CHOICES,
+        'session_selectionnee': session,
+    }
+    return render(request, 'accounts/dashboard_formateur.html', context)
+
 
 
 

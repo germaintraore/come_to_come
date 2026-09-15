@@ -26,5 +26,11 @@ urlpatterns = [
     path('admin-panel/formations/supprimer/<int:pk>/', views.supprimer_formation, name='supprimer_formation'),
 
 
+    # Gestion des Formateurs
+    path('admin-panel/formateurs/', views.liste_formateurs, name='liste_formateurs'),
+    path('espace-formateur/', views.dashboard_formateur, name='dashboard_formateur'),
+
+
+
 
 ]
