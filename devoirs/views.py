@@ -136,8 +136,8 @@ def resultat_devoir(request,pk):
 
 @login_required
 def creer_devoir(request):
-    if not request.user.is_staff:
-        messages.error(request,"Vous devez etre admin pour creer un devoir")
+    if not _est_formateur_ou_staff(request.user):
+        messages.error(request,"Accès réservé aux administrateurs et formateurs")
         return redirect('tableau_de_bord')
     
     if request.method=='POST':
@@ -154,7 +154,7 @@ def creer_devoir(request):
 @login_required
 def gerer_devoir(request, pk):
     """Page d'administration d'un devoir : voir les questions et en ajouter d'autres"""
-    if not request.user.is_staff:
+    if not _est_formateur_ou_staff(request.user):
         messages.error(request, "Accès réservé refusé")
         return redirect('tableau_de_bord')
 
@@ -185,7 +185,7 @@ def gerer_devoir(request, pk):
 @login_required
 def supprimer_question(request,pk):
     """ Supprimer une question précise d'un devoir"""
-    if not request.user.is_staff:
+    if not _est_formateur_ou_staff(request.user):
         messages.error(request,"Action réfusé")
         return redirect('tableau_de_bord')
     question=get_object_or_404(Question,pk=pk)
@@ -197,7 +197,7 @@ def supprimer_question(request,pk):
 @login_required
 def supprimer_devoir(request,pk):
     """ Supprimer un devoir précis et toutes ces questions associées"""
-    if not request.user.is_staff:
+    if not _est_formateur_ou_staff(request.user):
         messages.error(request,"Action réfusé")
         return redirect('tableau_de_bord')
     devoir=get_object_or_404(Devoir,pk=pk)
@@ -209,8 +209,8 @@ def supprimer_devoir(request,pk):
 @login_required
 def modifier_question(request, pk):
     """Modifier une question existante et mettre à jour ses choix / explications."""
-    if not request.user.is_staff:
-        messages.error(request, "Accès réservé aux administrateurs.")
+    if not _est_formateur_ou_staff(request.user):
+        messages.error(request, "Accès réservé aux administrateurs et formateurs.")
         return redirect('tableau_de_bord')
 
     question = get_object_or_404(Question, pk=pk)
@@ -241,7 +241,7 @@ def telecharger_devoir_pdf(request, pk):
     devoir = get_object_or_404(Devoir, pk=pk)
     soumission = None
 
-    if not request.user.is_staff:
+    if not _est_formateur_ou_staff(request.user):
         soumission = Soumission.objects.filter(apprenant=request.user, devoir=devoir).first()
         if not soumission:
             messages.error(request, "Vous devez d'abord traiter et soumettre le devoir avant de pouvoir télécharger le corrigé.")
@@ -409,9 +409,9 @@ def telecharger_devoir_pdf(request, pk):
 
 @login_required
 def dupliquer_devoir(request,pk):
-    if not request.user.is_staff:
+    if not _est_formateur_ou_staff(request.user):
         messages.error(request,"Accès refusé")
-        return redirect('admin_dashboard')
+        return redirect('tableau_de_bord')
     devoir_source=get_object_or_404(Devoir,pk=pk)
     if request.method=="POST":
         form=DupliquerDevoirForm(request.POST)
@@ -445,8 +445,8 @@ def dupliquer_devoir(request,pk):
 @login_required
 def modifier_devoir(request, pk):
     """Modifier les attributs d'un devoir existant (titre, formation, session, consignes, statut)."""
-    if not request.user.is_staff:
-        messages.error(request, "Accès réservé aux administrateurs.")
+    if not _est_formateur_ou_staff(request.user):
+        messages.error(request, "Accès réservé aux administrateurs et formateurs.")
         return redirect('tableau_de_bord')
 
     devoir = get_object_or_404(Devoir, pk=pk)

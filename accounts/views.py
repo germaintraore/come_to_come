@@ -66,7 +66,12 @@ def inscription(request):
 
 def connexion(request):
     if request.user.is_authenticated:
-        return redirect('tableau_de_bord')
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('admin_dashboard')
+        elif request.user.is_formateur:
+            return redirect('dashboard_formateur')
+        else:
+            return redirect('tableau_de_bord')
     if request.method == 'POST':
         form = ConnexionForm(request, data=request.POST)
         if form.is_valid():
@@ -76,6 +81,7 @@ def connexion(request):
                 messages.success(request, f"Bon retour {apprenant.nom_complet} !")
                 return redirect('admin_dashboard')
             elif apprenant.is_formateur:
+                messages.success(request, f"Bienvenue dans votre espace formateur {apprenant.nom_complet} !")
                 return redirect('dashboard_formateur')
             else:
                 messages.success(request, f"Bon retour {apprenant.nom_complet} !")
