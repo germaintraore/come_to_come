@@ -97,6 +97,7 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
         verbose_name="Numéro WhatsApp",
         help_text="Ex: +22670000000"
     )
+    
     formation = models.CharField(
         max_length=50,
         verbose_name="Type de formation",
@@ -114,6 +115,14 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     )
     is_active = models.BooleanField(default=True, verbose_name="Compte actif")
     is_staff = models.BooleanField(default=False, verbose_name="Membre du staff")
+    is_formateur = models.BooleanField(default=False, verbose_name="Membreee= des formateurs")
+    formation_assignee=models.ForeignKey(Formation,
+    nulle=True,
+    blank=True,
+    related_name="formateurs",
+    verbose_name="Formation assignée"
+    )
+
 
     objects = ApprenantManager()
 
