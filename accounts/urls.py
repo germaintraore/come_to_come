@@ -29,8 +29,5 @@ urlpatterns = [
     # Gestion des Formateurs
     path('admin-panel/formateurs/', views.liste_formateurs, name='liste_formateurs'),
     path('espace-formateur/', views.dashboard_formateur, name='dashboard_formateur'),
-
-
-
-
+    path('espace-formateur/apprenant/<int:apprenant_pk>/notes/', views.formateur_notes_apprenant, name='formateur_notes_apprenant'),
 ]

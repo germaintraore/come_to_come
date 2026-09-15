@@ -121,7 +121,7 @@ def admin_required(view_func):
 @admin_required
 def admin_dashboard(request):
     """Tableau de bord administrateur avec statistiques et filtres."""
-    apprenants = Apprenant.objects.filter(is_staff=False)
+    apprenants = Apprenant.objects.filter(is_staff=False, is_formateur=False)
     devoirs=Devoir.objects.all().order_by('-date_creation')
 
     # Filtre par formation
@@ -140,9 +140,9 @@ def admin_dashboard(request):
         apprenants = apprenants.filter(
             nom__icontains=search
         ) | Apprenant.objects.filter(
-            prenom__icontains=search, is_staff=False
+            prenom__icontains=search, is_staff=False, is_formateur=False
         ) | Apprenant.objects.filter(
-            whatsapp__icontains=search, is_staff=False
+            whatsapp__icontains=search, is_staff=False, is_formateur=False
         )
         apprenants = apprenants.distinct()
 
@@ -219,7 +219,7 @@ def reaffecter_apprenant(request, pk):
 
 def _get_filtree_queryset(request):
     """Construit le QuerySet filtre selon la formation et la session (GET)."""
-    qs = Apprenant.objects.filter(is_staff=False)
+    qs = Apprenant.objects.filter(is_staff=False, is_formateur=False)
     formation = request.GET.get('formation', '').strip()
     session = request.GET.get('session', '').strip()
     if formation:
@@ -524,7 +524,7 @@ def diffusion_whatsapp(request):
                 extensions_image = ('.jpg', '.jpeg', '.png', '.webp')
                 fichier_est_image = any(piece_jointe.name.lower().endswith(ext) for ext in extensions_image)
             # 2. Récupérer les apprenants ciblés
-            apprenants = Apprenant.objects.filter(session=session, is_active=True)
+            apprenants = Apprenant.objects.filter(session=session, is_active=True, is_formateur=False, is_staff=False)
             if formation:
                 apprenants = apprenants.filter(formation=formation)
             apprenants = apprenants.order_by('nom', 'prenom')
@@ -572,7 +572,7 @@ def liste_formations(request):
     
     # On attache les compteurs d'apprenants et de devoirs pour chaque formation
     for f in formations:
-        f.nb_apprenants = Apprenant.objects.filter(formation=f.code, is_staff=False).count()
+        f.nb_apprenants = Apprenant.objects.filter(formation=f.code, is_staff=False, is_formateur=False).count()
         f.nb_devoirs = Devoir.objects.filter(formation=f.code).count()
 
     form = FormationForm()
@@ -719,6 +719,41 @@ def dashboard_formateur(request):
     return render(request, 'accounts/dashboard_formateur.html', context)
 
 
+@formateur_required
+def formateur_notes_apprenant(request, apprenant_pk):
+    """Formateur voit toutes les notes d'un apprenant de sa formation."""
+    formateur = request.user
+    formation = formateur.formation_assignee
 
+    if not formation:
+        messages.warning(request, "Aucune formation ne vous est assignée.")
+        return redirect('dashboard_formateur')
 
+    # Sécurité : l'apprenant doit appartenir à la formation du formateur
+    apprenant = get_object_or_404(
+        Apprenant,
+        pk=apprenant_pk,
+        formation=formation.code,
+        is_staff=False,
+        is_formateur=False
+    )
+
+    from devoirs.models import Soumission
+    soumissions = Soumission.objects.filter(
+        apprenant=apprenant,
+        devoir__formation=formation.code
+    ).select_related('devoir').order_by('-date_soumission')
+
+    total = soumissions.count()
+    moyenne = round(sum(s.note for s in soumissions) / total, 1) if total > 0 else None
+
+    context = {
+        'formateur': formateur,
+        'formation': formation,
+        'apprenant_cible': apprenant,
+        'soumissions': soumissions,
+        'total_devoirs': total,
+        'moyenne': moyenne,
+    }
+    return render(request, 'accounts/formateur_notes_apprenant.html', context)
 
