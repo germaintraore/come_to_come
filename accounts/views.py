@@ -689,7 +689,16 @@ def dashboard_formateur(request):
 
     if not formation:
         messages.warning(request, "Aucune formation ne vous est actuellement assignée.")
-        return render(request, 'accounts/dashboard_formateur.html', {'apprenants': [], 'devoirs': []})
+        return render(request, 'accounts/dashboard_formateur.html', {
+            'formateur': formateur,
+            'formation': None,
+            'apprenants': [],
+            'devoirs': [],
+            'total_apprenants': 0,
+            'actifs': 0,
+            'session_choices': Apprenant.SESSION_MOIS_CHOICES,
+            'session_selectionnee': '',
+        })
 
     # Filtrer les apprenants de SA formation uniquement
     apprenants = Apprenant.objects.filter(
