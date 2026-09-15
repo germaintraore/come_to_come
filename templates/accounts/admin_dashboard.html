@@ -18,6 +18,9 @@
           <i class="bi bi-journal-check me-2 text-primary"></i>
           Gestion des Devoirs & QCM ({{ devoirs|length }})
         </h5>
+        <a href="{% url 'liste_formateurs' %}" class="btn btn-primary btn-sm">
+          <i class="bi bi-people me-1"></i>Gérer les Formateurs
+        </a>
         <a href="{% url 'creer_devoir' %}" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-circle me-1"></i>Nouveau Devoir
         </a>

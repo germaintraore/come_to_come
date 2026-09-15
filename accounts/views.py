@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils import timezone
-from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm,FormationForm
+from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm,FormationForm,FormateurCreationForm
 from .models import Apprenant,Formation
 from devoirs.models import Devoir
 
@@ -638,6 +638,43 @@ def supprimer_formation(request, pk):
         messages.success(request, f"La formation '{nom}' a été supprimée définitivement.")
 
     return redirect('liste_formations')
+
+
+# Dans accounts/views.py
+
+def formateur_required(view_func):
+    """Décorateur : réservé aux formateurs ou super-administrateurs."""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Veuillez vous connecter.")
+            return redirect('connexion')
+        if not (request.user.is_formateur or request.user.is_staff or request.user.is_superuser):
+            messages.error(request, "Accès réservé aux formateurs.")
+            return redirect('tableau_de_bord')
+        return view_func(request, *args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+@admin_required
+def liste_formateurs(request):
+    """Gestion des formateurs par le Super Admin."""
+    formateurs = Apprenant.objects.filter(is_formateur=True).select_related('formation_assignee')
+    form = FormateurCreationForm()
+
+    if request.method == 'POST':
+        form = FormateurCreationForm(request.POST)
+        if form.is_valid():
+            f = form.save()
+            messages.success(request, f"Le compte formateur pour {f.nom_complet} a été créé !")
+            return redirect('liste_formateurs')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs.")
+
+    return render(request, 'accounts/admin_formateurs.html', {
+        'formateurs': formateurs,
+        'form': form
+    })
+
 
 
 

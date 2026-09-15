@@ -208,3 +208,42 @@ class FormationForm(forms.ModelForm):
         }
 
 
+# Dans accounts/forms.py
+
+class FormateurCreationForm(forms.ModelForm):
+    """Formulaire utilisé par le Super Admin pour créer un compte formateur."""
+    
+    password = forms.CharField(
+        label="Mot de passe initial",
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Mot de passe'})
+    )
+    formation_assignee = forms.ModelChoiceField(
+        queryset=Formation.objects.filter(est_active=True),
+        label="Formation assignée *",
+        empty_label="Sélectionnez une formation",
+        widget=forms.Select(attrs={'class': 'form-select form-select-lg'})
+    )
+
+    class Meta:
+        model = Apprenant
+        fields = ['nom', 'prenom', 'whatsapp', 'formation_assignee', 'password']
+        widgets = {
+            'nom': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Nom'}),
+            'prenom': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Prénom'}),
+            'whatsapp': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': '+22670000000'}),
+        }
+
+    def save(self, commit=True):
+        formateur = super().save(commit=False)
+        formateur.is_formateur = True
+        formateur.is_staff = False  # Pas d'accès au panneau global super-admin
+        formateur.set_password(self.cleaned_data['password'])
+        # On synchronise le code de formation avec formation_assignee
+        if formateur.formation_assignee:
+            formateur.formation = formateur.formation_assignee.code
+        if commit:
+            formateur.save()
+        return formateur
+
+
+

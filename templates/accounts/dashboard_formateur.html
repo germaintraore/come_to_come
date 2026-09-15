@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Espace Formateur – {{ formation.nom }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5">
+
+        <!-- Bannière d'accueil du formateur -->
+        <div class="welcome-banner p-4 rounded-4 mb-4 bg-dark border border-secondary border-opacity-25">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <span
+                        class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 px-3 py-2 mb-2">
+                        <i class="bi bi-person-badge me-1"></i>Espace Formateur
+                    </span>
+                    <h2 class="text-white fw-bold mb-1">Bienvenue, {{ formateur.nom_complet }} 👋</h2>
+                    <p class="text-white-50 mb-0">
+                        Formation assignée : <strong class="text-info">{{ formation.nom }}</strong>
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'creer_devoir' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Ajouter un Devoir QCM
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cartes Statistiques de sa Formation -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Apprenants inscrits</span>
+                            <h3 class="fw-bold mb-0 mt-1">{{ total_apprenants }}</h3>
+                        </div>
+                        <i class="bi bi-people fs-1 text-primary opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Comptes actifs</span>
+                            <h3 class="fw-bold mb-0 mt-1 text-success">{{ actifs }}</h3>
+                        </div>
+                        <i class="bi bi-person-check fs-1 text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3 rounded-3 bg-dark border border-secondary border-opacity-25 text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white-50 small">Devoirs créés</span>
+                            <h3 class="fw-bold mb-0 mt-1 text-info">{{ devoirs|length }}</h3>
+                        </div>
+                        <i class="bi bi-journal-text fs-1 text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1 : Liste des Apprenants avec Filtre par Session -->
+        <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 mb-5 overflow-hidden">
+            <div
+                class="p-3 border-bottom border-secondary border-opacity-25 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <h5 class="text-white mb-0">
+                    <i class="bi bi-mortarboard text-primary me-2"></i>Mes Apprenants ({{ total_apprenants }})
+                </h5>
+                <!-- Filtre par session (mois) -->
+                <form method="get" class="d-flex align-items-center gap-2">
+                    <label class="text-white-50 small text-nowrap">Session :</label>
+                    <select name="session" class="form-select form-select-sm bg-dark text-white border-secondary"
+                        onchange="this.form.submit()">
+                        <option value="">Toutes les sessions</option>
+                        {% for code_s, nom_s in session_choices %}
+                        <option value="{{ code_s }}" {% if session_selectionnee==code_s %}selected{% endif %}>
+                            {{ nom_s }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead class="text-white-50 small">
+                        <tr>
+                            <th>N°</th>
+                            <th>Nom & Prénom</th>
+                            <th>WhatsApp</th>
+                            <th>Session</th>
+                            <th>Date d'inscription</th>
+                            <th class="text-center">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in apprenants %}
+                        <tr>
+                            <td class="text-white-50">{{ forloop.counter }}</td>
+                            <td class="fw-bold text-white">{{ a.nom_complet }}</td>
+                            <td>
+                                <a href="https://wa.me/{{ a.whatsapp }}" target="_blank"
+                                    class="text-success text-decoration-none">
+                                    <i class="bi bi-whatsapp me-1"></i>{{ a.whatsapp }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-25 text-info">
+                                    {{ a.get_session_display }}
+                                </span>
+                            </td>
+                            <td class="text-white-50 small">{{ a.date_inscription|date:"d/m/Y à H:i" }}</td>
+                            <td class="text-center">
+                                {% if a.is_active %}
+                                <span class="badge bg-success bg-opacity-25 text-success">Actif</span>
+                                {% else %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-white-50">
+                                Aucun apprenant inscrit dans cette formation pour le moment.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2 : Devoirs liés à cette Formation -->
+        <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden">
+            <div class="p-3 border-bottom border-secondary border-opacity-25">
+                <h5 class="text-white mb-0">
+                    <i class="bi bi-journal-check text-primary me-2"></i>Devoirs & QCM de la formation
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead class="text-white-50 small">
+                        <tr>
+                            <th>Titre du devoir</th>
+                            <th>Session</th>
+                            <th>Questions</th>
+                            <th>Statut</th>
+                            <th>Date de création</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in devoirs %}
+                        <tr>
+                            <td class="fw-bold text-white">{{ d.titre }}</td>
+                            <td>
+                                <span class="badge bg-primary bg-opacity-25 text-primary">
+                                    {{ d.get_session_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ d.total_questions }} question(s)
+                                </span>
+                            </td>
+                            <td>
+                                {% if d.est_actif %}
+                                <span class="badge bg-success bg-opacity-25 text-success">Actif</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-white-50 small">{{ d.date_creation|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-white-50">
+                                Aucun devoir créé pour cette formation.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
