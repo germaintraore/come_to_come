@@ -115,9 +115,11 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     )
     is_active = models.BooleanField(default=True, verbose_name="Compte actif")
     is_staff = models.BooleanField(default=False, verbose_name="Membre du staff")
+    
     is_formateur = models.BooleanField(default=False, verbose_name="Membreee= des formateurs")
     formation_assignee=models.ForeignKey(Formation,
-    nulle=True,
+    on_delete=models.SET_NULL,
+    null=True,
     blank=True,
     related_name="formateurs",
     verbose_name="Formation assignée"
@@ -145,5 +147,6 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     def get_formation_display(self):
         formation_obj = Formation.objects.filter(code=self.formation).first()
         return formation_obj.nom if formation_obj else self.formation
+
 
     
