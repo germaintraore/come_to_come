@@ -61,36 +61,31 @@
                         <div class="mb-3">
                             <label class="form-label text-white small">Nom *</label>
                             {{ form.nom }}
-                            {% if form.nom.errors %}<div class="text-danger small">{{ form.nom.errors.0 }}</div>{% endif
-                            %}
+                            {% if form.nom.errors %}<div class="text-danger small">{{ form.nom.errors.0 }}</div>{% endif %}
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-white small">Prénom *</label>
                             {{ form.prenom }}
-                            {% if form.prenom.errors %}<div class="text-danger small">{{ form.prenom.errors.0 }}</div>{%
-                            endif %}
+                            {% if form.prenom.errors %}<div class="text-danger small">{{ form.prenom.errors.0 }}</div>{% endif %}
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-white small">Numéro WhatsApp *</label>
                             {{ form.whatsapp }}
-                            {% if form.whatsapp.errors %}<div class="text-danger small">{{ form.whatsapp.errors.0 }}
-                            </div>{% endif %}
+                            {% if form.whatsapp.errors %}<div class="text-danger small">{{ form.whatsapp.errors.0 }}</div>{% endif %}
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-white small">Formation assignée *</label>
                             {{ form.formation_assignee }}
-                            {% if form.formation_assignee.errors %}<div class="text-danger small">{{
-                                form.formation_assignee.errors.0 }}</div>{% endif %}
+                            {% if form.formation_assignee.errors %}<div class="text-danger small">{{ form.formation_assignee.errors.0 }}</div>{% endif %}
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-white small">Mot de passe initial *</label>
                             {{ form.password }}
-                            {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors.0 }}
-                            </div>{% endif %}
+                            {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors.0 }}</div>{% endif %}
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 mt-2">
@@ -102,10 +97,8 @@
 
             <!-- Liste des formateurs existants (Colonne de droite) -->
             <div class="col-lg-8">
-                <div
-                    class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden">
-                    <div
-                        class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden">
+                    <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
                         <h5 class="text-white mb-0">Formateurs enregistrés ({{ formateurs|length }})</h5>
                     </div>
                     <div class="table-responsive">
@@ -123,19 +116,16 @@
                                 <tr>
                                     <td>
                                         <div class="fw-bold text-white">{{ f.nom_complet }}</div>
-                                        <small class="text-white-50">Inscrit le {{ f.date_inscription|date:"d/m/Y"
-                                            }}</small>
+                                        <small class="text-white-50">Inscrit le {{ f.date_inscription|date:"d/m/Y" }}</small>
                                     </td>
                                     <td>
-                                        <a href="https://wa.me/{{ f.whatsapp }}" target="_blank"
-                                            class="text-success text-decoration-none small">
+                                        <a href="https://wa.me/{{ f.whatsapp }}" target="_blank" class="text-success text-decoration-none small">
                                             <i class="bi bi-whatsapp me-1"></i>{{ f.whatsapp }}
                                         </a>
                                     </td>
                                     <td>
                                         {% if f.formation_assignee %}
-                                        <span
-                                            class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">
+                                        <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">
                                             <i class="bi bi-mortarboard me-1"></i>{{ f.formation_assignee.nom }}
                                         </span>
                                         {% else %}
@@ -144,11 +134,9 @@
                                     </td>
                                     <td class="text-center">
                                         {% if f.is_active %}
-                                        <span
-                                            class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">Actif</span>
+                                        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">Actif</span>
                                         {% else %}
-                                        <span
-                                            class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">Désactivé</span>
+                                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">Désactivé</span>
                                         {% endif %}
                                     </td>
                                 </tr>
