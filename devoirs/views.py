@@ -145,7 +145,7 @@ def creer_devoir(request):
         initial_data['formation'] = request.user.formation_assignee.code
 
     if request.method == 'POST':
-        form = DevoirForm(request.POST)
+        form = DevoirForm(request.POST, user=request.user)
         if form.is_valid():
             devoir = form.save(commit=False)
             if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
@@ -154,7 +154,7 @@ def creer_devoir(request):
             messages.success(request, f"Le devoir '{devoir.titre}' a été créé avec succès. Vous pouvez maintenant ajouter les questions !")
             return redirect('gerer_devoir', pk=devoir.pk)
     else:
-        form = DevoirForm(initial=initial_data)
+        form = DevoirForm(initial=initial_data, user=request.user)
 
     return render(request, 'devoirs/creer_devoir.html', {'form': form})
 
@@ -456,7 +456,7 @@ def dupliquer_devoir(request, pk):
         return redirect('dashboard_formateur')
 
     if request.method == "POST":
-        form = DupliquerDevoirForm(request.POST)
+        form = DupliquerDevoirForm(request.POST, user=request.user)
         if form.is_valid():
             nouveau_devoir = form.save(commit=False)
             if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
@@ -483,7 +483,7 @@ def dupliquer_devoir(request, pk):
                 return redirect('admin_dashboard')
             return redirect('dashboard_formateur')
     else:
-        form = DupliquerDevoirForm(instance=devoir_source)
+        form = DupliquerDevoirForm(instance=devoir_source, user=request.user)
         return render(request, 'devoirs/dupliquer_devoir.html', {
             'devoir': devoir_source,
             'form': form
@@ -504,7 +504,7 @@ def modifier_devoir(request, pk):
         return redirect('dashboard_formateur')
 
     if request.method == 'POST':
-        form = DevoirForm(request.POST, instance=devoir)
+        form = DevoirForm(request.POST, instance=devoir, user=request.user)
         if form.is_valid():
             devoir_modifie = form.save(commit=False)
             if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
@@ -515,7 +515,7 @@ def modifier_devoir(request, pk):
                 return redirect('admin_dashboard')
             return redirect('dashboard_formateur')
     else:
-        form = DevoirForm(instance=devoir)
+        form = DevoirForm(instance=devoir, user=request.user)
 
     return render(request, 'devoirs/modifier_devoir.html', {
         'form': form,
@@ -618,6 +618,15 @@ def ajouter_ressource(request):
     Le formulaire HTML doit avoir enctype='multipart/form-data'.
     """
     formateur = request.user
+
+    # Vérification : le formateur a-t-il une formation assignée ?
+    if formateur.is_formateur and not (formateur.is_staff or formateur.is_superuser):
+        if not formateur.formation_assignee and not formateur.formation:
+            messages.warning(
+                request,
+                "Aucune formation ne vous est actuellement assignée. Veuillez contacter l'administrateur."
+            )
+            return redirect('dashboard_formateur')
 
     if request.method == 'POST':
         form = RessourceForm(

@@ -32,10 +32,26 @@ class DevoirForm(forms.ModelForm):
             }),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if user and user.is_formateur and not (user.is_staff or user.is_superuser):
+            pks = set()
+            if getattr(user, 'formation_assignee_id', None):
+                pks.add(user.formation_assignee_id)
+            if getattr(user, 'formation', None):
+                pks.update(Formation.objects.filter(code=user.formation).values_list('id', flat=True))
+            pks.update(Formation.objects.filter(formateurs=user).values_list('id', flat=True))
+            formations = list(Formation.objects.filter(id__in=pks))
+            if formations:
+                choices = [(f.code, f.nom) for f in formations]
+                self.fields['formation'].initial = formations[0].code
+            else:
+                choices = [('', 'Aucune formation assignée')]
+        else:
+            choices = Formation.get_choices(only_active=True)
+
         self.fields['formation'].widget = forms.Select(
-            choices=Formation.get_choices(only_active=True),
+            choices=choices,
             attrs={'class': 'form-select'}
         )
 
@@ -96,12 +112,28 @@ class DupliquerDevoirForm(forms.ModelForm):
             'session': forms.Select(attrs={
                 'class': 'form-control',
             }),
-
         }
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if user and user.is_formateur and not (user.is_staff or user.is_superuser):
+            pks = set()
+            if getattr(user, 'formation_assignee_id', None):
+                pks.add(user.formation_assignee_id)
+            if getattr(user, 'formation', None):
+                pks.update(Formation.objects.filter(code=user.formation).values_list('id', flat=True))
+            pks.update(Formation.objects.filter(formateurs=user).values_list('id', flat=True))
+            formations = list(Formation.objects.filter(id__in=pks))
+            if formations:
+                choices = [(f.code, f.nom) for f in formations]
+                self.fields['formation'].initial = formations[0].code
+            else:
+                choices = [('', 'Aucune formation assignée')]
+        else:
+            choices = Formation.get_choices(only_active=True)
+
         self.fields['formation'].widget = forms.Select(
-            choices=Formation.get_choices(only_active=True),
+            choices=choices,
             attrs={'class': 'form-select'}
         )
 
@@ -139,28 +171,61 @@ class RessourceForm(forms.ModelForm):
     def __init__(self, *args, formateur=None, **kwargs):
         """
         formateur : l'utilisateur formateur connecté.
-        Si une formation lui est assignée, le champ 'formation' est pré-rempli
-        et verrouillé (l'utilisateur ne peut pas changer de filière).
+        Ne propose QUE la ou les formations assignées à ce formateur.
+        Si une seule formation lui est assignée, elle est automatiquement présélectionnée.
+        Pour un super-admin ou staff, toutes les formations actives sont proposées.
         """
         super().__init__(*args, **kwargs)
+        self.formateur = formateur
 
-        # Construction dynamique des choix de formations
-        formation_choices = [('', '-- Choisir une formation --')] + Formation.get_choices(only_active=False)
+        if formateur and not (formateur.is_staff or formateur.is_superuser):
+            pks = set()
+            if getattr(formateur, 'formation_assignee_id', None):
+                pks.add(formateur.formation_assignee_id)
+            if getattr(formateur, 'formation', None):
+                pks.update(Formation.objects.filter(code=formateur.formation).values_list('id', flat=True))
+            pks.update(Formation.objects.filter(formateurs=formateur).values_list('id', flat=True))
+
+            formations_list = list(Formation.objects.filter(id__in=pks))
+
+            if formations_list:
+                if len(formations_list) == 1:
+                    f_unique = formations_list[0]
+                    formation_choices = [(f_unique.code, f_unique.nom)]
+                    self.fields['formation'].initial = f_unique.code
+                else:
+                    formation_choices = [('', '-- Choisir parmi vos formations assignées --')] + [
+                        (f.code, f.nom) for f in formations_list
+                    ]
+            else:
+                formation_choices = [('', 'Aucune formation ne vous est assignée')]
+        else:
+            formation_choices = [('', '-- Choisir une formation --')] + Formation.get_choices(only_active=True)
+
         self.fields['formation'].widget = forms.Select(
             choices=formation_choices,
             attrs={'class': 'form-select bg-dark text-white border-secondary'}
         )
 
-        # Si le formateur a une formation assignée : pré-remplir et verrouiller
-        if formateur and formateur.formation_assignee:
-            code = formateur.formation_assignee.code
-            self.fields['formation'].initial = code
-            self.fields['formation'].widget.attrs['disabled'] = 'disabled'
-            # Champ caché car les champs "disabled" ne sont pas soumis dans le POST
-            self.fields['formation_hidden'] = forms.CharField(
-                initial=code,
-                widget=forms.HiddenInput()
+    def clean_formation(self):
+        formation = self.cleaned_data.get('formation')
+        if not formation:
+            raise forms.ValidationError("Veuillez sélectionner une formation.")
+
+        if self.formateur and not (self.formateur.is_staff or self.formateur.is_superuser):
+            codes_autorises = set()
+            if getattr(self.formateur, 'formation_assignee', None):
+                codes_autorises.add(self.formateur.formation_assignee.code)
+            if getattr(self.formateur, 'formation', None):
+                codes_autorises.add(self.formateur.formation)
+            codes_autorises.update(
+                Formation.objects.filter(formateurs=self.formateur).values_list('code', flat=True)
             )
+
+            if formation not in codes_autorises:
+                raise forms.ValidationError("Vous n'êtes pas autorisé à publier des ressources pour cette formation.")
+
+        return formation
 
     def clean_fichier(self):
         """
@@ -191,13 +256,3 @@ class RessourceForm(forms.ModelForm):
             )
 
         return fichier
-
-    def clean(self):
-        """
-        Si le champ 'formation' est disabled, il ne sera pas dans cleaned_data.
-        On récupère la valeur depuis le champ caché formation_hidden.
-        """
-        cleaned = super().clean()
-        if not cleaned.get('formation'):
-            cleaned['formation'] = self.data.get('formation_hidden', '')
-        return cleaned

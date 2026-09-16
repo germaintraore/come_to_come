@@ -83,13 +83,20 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label text-white-50 small fw-semibold">
+                    <label for="id_formation" class="form-label text-white-50 small fw-semibold">
                         Formation <span class="text-danger">*</span>
                     </label>
                     {{ form.formation }}
-                    {% if form.formation_hidden %}{{ form.formation_hidden }}{% endif %}
                     {% if form.formation.errors %}
-                    <div class="text-danger small mt-1">{{ form.formation.errors.0 }}</div>
+                    <div class="text-danger small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>{{ form.formation.errors.0 }}
+                    </div>
+                    {% endif %}
+                    {% if not request.user.is_staff and not request.user.is_superuser %}
+                    <div class="form-text text-white-50 small mt-1">
+                        <i class="bi bi-info-circle me-1 text-info"></i>
+                        Seule la formation qui vous est assignée est sélectionnable.
+                    </div>
                     {% endif %}
                 </div>
 
