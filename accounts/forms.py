@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import authenticate
-from .models import Apprenant,Formation
+from django.contrib.auth import authenticate, password_validation
+from .models import Apprenant, Formation
 
 
 class InscriptionForm(forms.ModelForm):
@@ -252,6 +252,118 @@ class FormateurCreationForm(forms.ModelForm):
         if commit:
             formateur.save()
         return formateur
+
+
+# ============================================================
+# FORMULAIRES DE GESTION DU PROFIL ET MOTS DE PASSE
+# ============================================================
+
+class ProfilUpdateForm(forms.ModelForm):
+    """
+    Formulaire permettant à un utilisateur (apprenant, formateur, admin)
+    de modifier son nom, ses prénoms et sa photo de profil.
+    """
+    class Meta:
+        model = Apprenant
+        fields = ['nom', 'prenom', 'photo_profil']
+        widgets = {
+            'nom': forms.TextInput(attrs={
+                'class': 'form-control bg-dark text-white border-secondary',
+                'placeholder': 'Votre nom de famille'
+            }),
+            'prenom': forms.TextInput(attrs={
+                'class': 'form-control bg-dark text-white border-secondary',
+                'placeholder': 'Vos prénoms'
+            }),
+            'photo_profil': forms.FileInput(attrs={
+                'class': 'form-control bg-dark text-white border-secondary',
+                'accept': 'image/jpeg,image/png,image/webp,image/gif'
+            }),
+        }
+
+    def clean_photo_profil(self):
+        photo = self.cleaned_data.get('photo_profil')
+        if photo and hasattr(photo, 'size'):
+            # Limite de 5 Mo pour la photo de profil
+            if photo.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("La photo de profil ne doit pas dépasser 5 Mo.")
+        return photo
+
+
+class ChangerMotDePasseForm(forms.Form):
+    """
+    Formulaire permettant à l'utilisateur connecté de changer son mot de passe
+    en renseignant son mot de passe actuel puis le nouveau mot de passe.
+    """
+    ancien_mot_de_passe = forms.CharField(
+        label="Mot de passe actuel",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control bg-dark text-white border-secondary',
+            'placeholder': 'Saisissez votre mot de passe actuel',
+            'autocomplete': 'current-password'
+        })
+    )
+    nouveau_mot_de_passe = forms.CharField(
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control bg-dark text-white border-secondary',
+            'placeholder': 'Minimum 8 caractères',
+            'autocomplete': 'new-password'
+        }),
+        min_length=8
+    )
+    confirmation_mot_de_passe = forms.CharField(
+        label="Confirmer le nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control bg-dark text-white border-secondary',
+            'placeholder': 'Répétez le nouveau mot de passe',
+            'autocomplete': 'new-password'
+        }),
+        min_length=8
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_ancien_mot_de_passe(self):
+        ancien = self.cleaned_data.get('ancien_mot_de_passe')
+        if not self.user.check_password(ancien):
+            raise forms.ValidationError("Le mot de passe actuel est incorrect.")
+        return ancien
+
+    def clean(self):
+        cleaned_data = super().clean()
+        nouveau = cleaned_data.get('nouveau_mot_de_passe')
+        confirmation = cleaned_data.get('confirmation_mot_de_passe')
+
+        if nouveau and confirmation:
+            if nouveau != confirmation:
+                self.add_error('confirmation_mot_de_passe', "Les deux mots de passe ne correspondent pas.")
+            else:
+                try:
+                    password_validation.validate_password(nouveau, self.user)
+                except forms.ValidationError as error:
+                    self.add_error('nouveau_mot_de_passe', error)
+
+        return cleaned_data
+
+
+class AdminResetPasswordForm(forms.Form):
+    """
+    Formulaire utilisé par le Super Admin pour réinitialiser le mot de passe
+    d'un apprenant ou d'un formateur.
+    """
+    nouveau_mot_de_passe = forms.CharField(
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control bg-dark text-white border-secondary',
+            'placeholder': 'Minimum 6 caractères (ex: Temp2026@)',
+            'id': 'id_admin_nouveau_mdp'
+        }),
+        min_length=6,
+        help_text="Définissez un mot de passe temporaire ou choisissez d'en générer un."
+    )
 
 
 

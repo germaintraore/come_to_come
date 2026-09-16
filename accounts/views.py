@@ -7,13 +7,16 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 from django import forms
 from django.shortcuts import render, redirect,get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils import timezone
-from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm,FormationForm,FormateurCreationForm
-from .models import Apprenant,Formation
+from .forms import (
+    InscriptionForm, ConnexionForm, DiffusionWhatsAppForm, FormationForm,
+    FormateurCreationForm, ProfilUpdateForm, ChangerMotDePasseForm, AdminResetPasswordForm
+)
+from .models import Apprenant, Formation
 from devoirs.models import Devoir, RessourcePedagogique
 
 
@@ -800,4 +803,79 @@ def formateur_notes_apprenant(request, apprenant_pk):
         'moyenne': moyenne,
     }
     return render(request, 'accounts/formateur_notes_apprenant.html', context)
+
+
+@login_required
+def profil(request):
+    """
+    Page de profil utilisateur permettant à chaque utilisateur connecté :
+    - De modifier son nom, ses prénoms et sa photo de profil
+    - De changer son propre mot de passe en renseignant son mot de passe actuel
+    """
+    user = request.user
+    form_profil = ProfilUpdateForm(instance=user)
+    form_password = ChangerMotDePasseForm(user=user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'update_profile':
+            form_profil = ProfilUpdateForm(request.POST, request.FILES, instance=user)
+            if form_profil.is_valid():
+                form_profil.save()
+                messages.success(request, "Votre profil a été mis à jour avec succès !")
+                return redirect('profil')
+            else:
+                messages.error(request, "Veuillez corriger les erreurs dans vos informations personnelles.")
+
+        elif action == 'change_password':
+            form_password = ChangerMotDePasseForm(user=user, data=request.POST)
+            if form_password.is_valid():
+                nouveau_mdp = form_password.cleaned_data['nouveau_mot_de_passe']
+                user.set_password(nouveau_mdp)
+                user.save()
+                update_session_auth_hash(request, user)  # Maintient l'utilisateur connecté sans déconnexion
+                messages.success(request, "Votre mot de passe a été modifié avec succès !")
+                return redirect('profil')
+            else:
+                messages.error(request, "Veuillez corriger les erreurs dans le formulaire de mot de passe.")
+
+    context = {
+        'profil_user': user,
+        'form_profil': form_profil,
+        'form_password': form_password,
+    }
+    return render(request, 'accounts/profil.html', context)
+
+
+@admin_required
+def admin_changer_mot_de_passe(request, pk):
+    """
+    Permet au Super Admin de réinitialiser le mot de passe d'un apprenant ou d'un formateur.
+    Accepte une soumission POST contenant le nouveau mot de passe.
+    """
+    target_user = get_object_or_404(Apprenant, pk=pk)
+
+    if request.method == 'POST':
+        form = AdminResetPasswordForm(request.POST)
+        if form.is_valid():
+            nouveau_mdp = form.cleaned_data['nouveau_mot_de_passe']
+            target_user.set_password(nouveau_mdp)
+            target_user.save()
+            role = "du formateur" if target_user.is_formateur else "de l'apprenant"
+            messages.success(
+                request,
+                f"✅ Le mot de passe {role} {target_user.nom_complet} ({target_user.whatsapp}) "
+                f"a été mis à jour avec succès : « {nouveau_mdp} ». L'utilisateur peut désormais se connecter avec ce mot de passe."
+            )
+        else:
+            messages.error(request, "Le mot de passe doit comporter au moins 6 caractères.")
+
+    # Redirection vers la page d'origine
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
+    if target_user.is_formateur:
+        return redirect('liste_formateurs')
+    return redirect('admin_dashboard')
 

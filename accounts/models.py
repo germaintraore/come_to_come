@@ -124,7 +124,12 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     related_name="formateurs",
     verbose_name="Formation assignée"
     )
-
+    photo_profil = models.ImageField(
+        upload_to='avatars/',
+        null=True,
+        blank=True,
+        verbose_name="Photo de profil"
+    )
 
     objects = ApprenantManager()
 
@@ -143,6 +148,16 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     @property
     def nom_complet(self):
         return f"{self.prenom} {self.nom}"
+
+    @property
+    def avatar_url(self):
+        """Retourne l'URL de la photo de profil si elle existe, sinon None."""
+        if self.photo_profil:
+            try:
+                return self.photo_profil.url
+            except Exception:
+                return None
+        return None
     
     def get_formation_display(self):
         formation_obj = Formation.objects.filter(code=self.formation).first()

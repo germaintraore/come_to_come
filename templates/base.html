@@ -97,7 +97,11 @@
                         <li class="nav-item dropdown ms-lg-2">
                             <a class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2"
                                href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.avatar_url %}
+                                <img src="{{ user.avatar_url }}" alt="{{ user.prenom }}" class="rounded-circle object-fit-cover border border-1 border-primary" style="width: 24px; height: 24px;">
+                                {% else %}
                                 <i class="bi bi-person-circle fs-6"></i>
+                                {% endif %}
                                 <span class="d-none d-xl-inline text-white small fw-semibold">{{ user.prenom }}</span>
                                 {% if user.is_staff or user.is_superuser %}
                                 <span class="badge bg-warning text-dark d-none d-lg-inline-block">Admin</span>
@@ -111,6 +115,11 @@
                                 <li class="px-3 py-2 border-bottom border-secondary border-opacity-25">
                                     <div class="fw-bold text-white small">{{ user.nom_complet }}</div>
                                     <div class="text-white-50 small">{{ user.whatsapp }}</div>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'profil' %}">
+                                        <i class="bi bi-person-gear text-primary me-2"></i>Mon Profil & Sécurité
+                                    </a>
                                 </li>
                                 {% if user.is_formateur %}
                                 <li>

@@ -314,11 +314,22 @@ class ReaffecterRessourceForm(forms.Form):
 
 class ModifierRessourceForm(forms.ModelForm):
     """
-    Formulaire permettant de modifier une ressource existante (titre, description, session, visibilité).
+    Formulaire permettant de modifier une ressource existante (titre, description, session, visibilité)
+    avec possibilité de remplacer le fichier (utile en cas de perte de fichier ou nouvelle version).
     """
+    fichier = forms.FileField(
+        required=False,
+        label="Remplacer le fichier (optionnel)",
+        help_text="Laissez vide pour conserver le fichier actuel. Formats acceptés : PDF, MP4, MOV, AVI, MKV, WEBM (Max 50 Mo).",
+        widget=forms.FileInput(attrs={
+            'class': 'form-control bg-dark text-white border-secondary',
+            'id': 'id_fichier_remplacement'
+        })
+    )
+
     class Meta:
         model = RessourcePedagogique
-        fields = ['titre', 'description', 'session', 'type_fichier', 'est_visible']
+        fields = ['titre', 'description', 'session', 'type_fichier', 'fichier', 'est_visible']
         widgets = {
             'titre': forms.TextInput(attrs={
                 'class': 'form-control bg-dark text-white border-secondary',
@@ -339,4 +350,26 @@ class ModifierRessourceForm(forms.ModelForm):
                 'class': 'form-check-input'
             }),
         }
+
+    def clean_fichier(self):
+        fichier = self.cleaned_data.get('fichier')
+        if not fichier:
+            return fichier
+
+        taille_max = 50 * 1024 * 1024  # 50 Mo
+        if fichier.size > taille_max:
+            taille_actuelle_mo = round(fichier.size / (1024 * 1024), 1)
+            raise forms.ValidationError(
+                f"Le fichier est trop volumineux ({taille_actuelle_mo} Mo). "
+                f"La taille maximale autorisée est de 50 Mo."
+            )
+
+        _, ext = os.path.splitext(fichier.name)
+        if ext.lower() not in EXTENSIONS_AUTORISEES:
+            raise forms.ValidationError(
+                f"Format non autorisé : '{ext}'. "
+                f"Formats acceptés : PDF, MP4, MOV, AVI, MKV, WEBM."
+            )
+
+        return fichier
 

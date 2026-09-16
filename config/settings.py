@@ -144,6 +144,25 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ============================================================
+# STOCKAGE DES FICHIERS (Cloudinary si configuré, sinon local)
+# Sur Render (plan gratuit), le disque local est éphémère.
+# Configurer CLOUDINARY_URL ou CLOUDINARY_CLOUD_NAME permet de
+# conserver définitivement les fichiers médias (PDF, vidéos, avatars).
+# ============================================================
+CLOUDINARY_URL = get_env('CLOUDINARY_URL') or os.environ.get('CLOUDINARY_URL')
+CLOUDINARY_CLOUD_NAME = get_env('CLOUDINARY_CLOUD_NAME') or os.environ.get('CLOUDINARY_CLOUD_NAME')
+
+if CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME:
+    if 'cloudinary_storage' not in INSTALLED_APPS:
+        INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': get_env('CLOUDINARY_CLOUD_NAME', ''),
+        'API_KEY': get_env('CLOUDINARY_API_KEY', ''),
+        'API_SECRET': get_env('CLOUDINARY_API_SECRET', ''),
+    }
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/connexion/'

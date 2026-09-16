@@ -664,7 +664,7 @@ def telecharger_ressource(request, pk):
     Contrôle d'accès : l'apprenant doit appartenir à la même formation ET session.
     Les admins et formateurs ont accès sans restriction.
 
-    La réponse utilise Content-Disposition: attachment pour forcer le téléchargement.
+    Supporte à la fois le stockage local et le stockage distant (Cloudinary).
     """
     import os as _os
     ressource = get_object_or_404(RessourcePedagogique, pk=pk, est_visible=True)
@@ -679,13 +679,23 @@ def telecharger_ressource(request, pk):
             messages.error(request, "Cette ressource ne correspond pas à votre session.")
             return redirect('tableau_de_bord')
 
-    # Lecture du fichier et envoi au navigateur
+    if not ressource.fichier:
+        messages.error(request, "Aucun fichier n'est associé à cette ressource.")
+        return redirect('tableau_de_bord')
+
+    # 1. Si hébergé sur stockage externe (ex: Cloudinary), rediriger vers l'URL sécurisée
     try:
-        chemin_fichier = ressource.fichier.path  # Chemin absolu sur le disque
-        with open(chemin_fichier, 'rb') as f:
+        url = ressource.fichier.url
+        if url.startswith('http://') or url.startswith('https://'):
+            return redirect(url)
+    except Exception:
+        pass
+
+    # 2. Lecture du fichier local et envoi au navigateur
+    try:
+        with ressource.fichier.open('rb') as f:
             contenu = f.read()
 
-        # Correspondance extension → Content-Type HTTP
         extension = ressource.extension()
         content_types = {
             'pdf': 'application/pdf',
@@ -702,8 +712,11 @@ def telecharger_ressource(request, pk):
         response['Content-Disposition'] = f'attachment; filename="{nom_fichier}"'
         return response
 
-    except FileNotFoundError:
-        messages.error(request, "Le fichier de cette ressource est introuvable sur le serveur.")
+    except (FileNotFoundError, OSError, ValueError):
+        messages.error(request, "Le fichier de cette ressource est temporairement introuvable sur le serveur. Veuillez en informer le formateur.")
+        return redirect('tableau_de_bord')
+    except Exception as e:
+        messages.error(request, f"Erreur lors du téléchargement : {str(e)}")
         return redirect('tableau_de_bord')
 
 
@@ -732,7 +745,7 @@ def supprimer_ressource(request, pk):
                 if _os.path.exists(chemin):
                     _os.remove(chemin)  # Suppression du fichier réel
             except Exception:
-                pass  # Si déjà absent, on continue
+                pass  # Si déjà absent ou stockage externe, on continue
 
         titre = ressource.titre
         ressource.delete()  # Suppression de l'enregistrement en BDD
@@ -790,6 +803,7 @@ def reaffecter_ressource(request, pk):
                         titre=nouveau_titre,
                         description=ressource.description,
                         fichier=fichier_copie,
+                        taille_fichier=ressource.taille_fichier,
                         type_fichier=ressource.type_fichier,
                         formation=ressource.formation,
                         session=session_cible,
@@ -801,7 +815,7 @@ def reaffecter_ressource(request, pk):
                         f"✅ La ressource « {nouvelle_ressource.titre} » a été dupliquée pour la session {nouvelle_ressource.get_session_display()} avec succès."
                     )
                     return redirect('dashboard_formateur')
-                except FileNotFoundError:
+                except (FileNotFoundError, OSError):
                     messages.error(request, "Impossible de dupliquer : le fichier source est introuvable sur le serveur.")
                 except Exception as e:
                     messages.error(request, f"Erreur lors de la duplication de la ressource : {str(e)}")
@@ -821,7 +835,7 @@ def reaffecter_ressource(request, pk):
 def modifier_ressource(request, pk):
     """
     Permet à un formateur de modifier les informations d'une ressource existante
-    (titre, description, session, type, visibilité).
+    (titre, description, session, type, visibilité) et de remplacer le fichier.
     """
     ressource = get_object_or_404(RessourcePedagogique, pk=pk)
 
@@ -831,10 +845,15 @@ def modifier_ressource(request, pk):
             return redirect('dashboard_formateur')
 
     if request.method == 'POST':
-        form = ModifierRessourceForm(request.POST, instance=ressource)
+        form = ModifierRessourceForm(request.POST, request.FILES, instance=ressource)
         if form.is_valid():
-            form.save()
-            messages.success(request, f"✅ La ressource « {ressource.titre} » a été mise à jour avec succès.")
+            ressource_maj = form.save(commit=False)
+            # Si un nouveau fichier a été fourni
+            nouveau_fichier = form.cleaned_data.get('fichier')
+            if nouveau_fichier:
+                ressource_maj.taille_fichier = nouveau_fichier.size
+            ressource_maj.save()
+            messages.success(request, f"✅ La ressource « {ressource_maj.titre} » a été mise à jour avec succès.")
             return redirect('dashboard_formateur')
         else:
             messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")

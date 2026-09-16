@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="dashboard-wrapper">
-    <div class="container py-4" style="max-width: 780px;">
+    <div class="container py-4" style="max-width: 820px;">
 
         <!-- Fil d'ariane -->
         <nav aria-label="breadcrumb" class="mb-3">
@@ -27,7 +27,7 @@
             <div>
                 <span class="badge bg-warning text-dark mb-2"><i class="bi bi-pencil-square me-1"></i>Modification</span>
                 <h1 class="text-white fw-bold mb-0" style="font-size: 1.5rem;">Modifier la ressource</h1>
-                <p class="text-white-50 small mb-0">Mettez à jour le titre, la description, la session ou la visibilité.</p>
+                <p class="text-white-50 small mb-0">Mettez à jour les informations, remplacez le fichier si nécessaire ou changez la session.</p>
             </div>
             <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i>Retour
@@ -47,7 +47,7 @@
         {% endif %}
 
         <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4 shadow">
-            <form method="post" novalidate>
+            <form method="post" enctype="multipart/form-data" novalidate id="formModifierRessource">
                 {% csrf_token %}
 
                 <div class="mb-3">
@@ -96,26 +96,26 @@
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
                             {% if ressource.type_fichier == 'pdf' %}
-                            <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                            <i class="bi bi-file-earmark-pdf text-danger fs-3"></i>
                             {% else %}
-                            <i class="bi bi-camera-video text-primary fs-4"></i>
+                            <i class="bi bi-camera-video text-primary fs-3"></i>
                             {% endif %}
                             <div>
-                                <div class="text-white small fw-bold">{{ ressource.fichier.name|slice:"11:" }}</div>
-                                <div class="text-white-50 small">Taille : {{ ressource.taille_lisible }}</div>
+                                <div class="text-white small fw-bold">Fichier actuel : {{ ressource.fichier.name }}</div>
+                                <div class="text-white-50 small">Taille enregistrée : {{ ressource.taille_lisible }}</div>
                             </div>
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-sm btn-outline-warning" type="button"
                                     data-bs-toggle="collapse" data-bs-target="#collapseApercuActuel">
-                                <i class="bi bi-eye me-1"></i>Aperçu
+                                <i class="bi bi-eye me-1"></i>Aperçu actuel
                             </button>
                             <a href="{% url 'telecharger_ressource' ressource.pk %}" class="btn btn-sm btn-outline-info" target="_blank">
                                 <i class="bi bi-download me-1"></i>Télécharger
                             </a>
                         </div>
                     </div>
-                    <!-- Accordion d'aperçu -->
+                    <!-- Accordion d'aperçu actuel -->
                     <div class="collapse mt-3" id="collapseApercuActuel">
                         <div class="p-2 rounded-3 bg-black bg-opacity-50 border border-secondary border-opacity-25">
                             {% if ressource.type_fichier == 'pdf' %}
@@ -130,6 +130,36 @@
                                 </video>
                             </div>
                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section remplacement de fichier (optionnel) -->
+                <div class="mb-4 p-3 bg-secondary bg-opacity-10 rounded-3 border border-secondary border-opacity-25">
+                    <label for="id_fichier_remplacement" class="form-label text-white-50 small fw-semibold">
+                        <i class="bi bi-cloud-arrow-up me-1 text-warning"></i>Remplacer le fichier (optionnel)
+                    </label>
+                    {{ form.fichier }}
+                    <div class="form-text text-white-50 small mt-1">
+                        Sélectionnez un nouveau fichier PDF ou vidéo uniquement si vous souhaitez remplacer le fichier existant (Max 50 Mo).
+                    </div>
+                    {% if form.fichier.errors %}
+                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form.fichier.errors.0 }}</div>
+                    {% endif %}
+
+                    <!-- Prévisualisation dynamique du nouveau fichier sélectionné -->
+                    <div id="nouveau-fichier-preview" class="d-none mt-3 p-3 rounded-3 bg-black bg-opacity-40 border border-warning border-opacity-50">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-warning small fw-bold"><i class="bi bi-eye me-1"></i>Aperçu du nouveau fichier à enregistrer :</span>
+                            <span id="nouveau-fichier-info" class="text-white-50 small"></span>
+                        </div>
+                        <div id="pdf-preview-box" class="d-none">
+                            <div class="ratio ratio-16x9" style="min-height: 360px;">
+                                <iframe id="pdf-frame" src="" style="border:0;" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <div id="video-preview-box" class="d-none text-center">
+                            <video id="video-player" controls class="w-100 rounded-3" style="max-height: 340px;"></video>
                         </div>
                     </div>
                 </div>
@@ -160,4 +190,52 @@
 
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputFichier = document.getElementById('id_fichier_remplacement');
+    const previewBox = document.getElementById('nouveau-fichier-preview');
+    const infoSpan = document.getElementById('nouveau-fichier-info');
+    const pdfBox = document.getElementById('pdf-preview-box');
+    const pdfFrame = document.getElementById('pdf-frame');
+    const videoBox = document.getElementById('video-preview-box');
+    const videoPlayer = document.getElementById('video-player');
+    const typeSelect = document.getElementById('id_type_fichier');
+
+    if (inputFichier) {
+        inputFichier.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                previewBox.classList.add('d-none');
+                return;
+            }
+
+            const fileSizeMo = (file.size / (1024 * 1024)).toFixed(2);
+            infoSpan.textContent = `${file.name} (${fileSizeMo} Mo)`;
+            previewBox.classList.remove('d-none');
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const objectUrl = URL.createObjectURL(file);
+
+            if (ext === 'pdf') {
+                pdfBox.classList.remove('d-none');
+                videoBox.classList.add('d-none');
+                videoPlayer.pause();
+                videoPlayer.src = '';
+                pdfFrame.src = objectUrl;
+                if (typeSelect) typeSelect.value = 'pdf';
+            } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
+                videoBox.classList.remove('d-none');
+                pdfBox.classList.add('d-none');
+                pdfFrame.src = '';
+                videoPlayer.src = objectUrl;
+                if (typeSelect) typeSelect.value = 'video';
+            } else {
+                pdfBox.classList.add('d-none');
+                videoBox.classList.add('d-none');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

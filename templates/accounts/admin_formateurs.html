@@ -109,6 +109,7 @@
                                     <th>WhatsApp</th>
                                     <th>Formation Assignée</th>
                                     <th class="text-center">Statut</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,10 +140,17 @@
                                         <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">Désactivé</span>
                                         {% endif %}
                                     </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                                onclick="ouvrirModalResetFormateur('{{ f.id }}', '{{ f.nom_complet|escapejs }}', '{{ f.whatsapp|escapejs }}', '{% url 'admin_changer_mot_de_passe' f.pk %}')"
+                                                title="Réinitialiser le mot de passe du formateur">
+                                            <i class="bi bi-key-fill me-1"></i>Mot de passe
+                                        </button>
+                                    </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-white-50">
+                                    <td colspan="5" class="text-center py-4 text-white-50">
                                         Aucun formateur enregistré pour le moment.
                                     </td>
                                 </tr>
@@ -156,4 +164,87 @@
 
     </div>
 </div>
+
+<!-- Modal Réinitialiser Mot de passe Formateur (Admin) -->
+<div class="modal fade" id="modalResetFormateur" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ctc-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-white">
+                    <i class="bi bi-key-fill text-warning me-2"></i>Réinitialiser le mot de passe
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formResetFormateur" method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div class="modal-body">
+                    <p class="text-white-50 mb-3">
+                        Définir un nouveau mot de passe pour le formateur <strong class="text-white" id="modalFormateurNom"></strong> (<span class="text-success" id="modalFormateurWhatsapp"></span>) :
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50 small">Nouveau mot de passe</label>
+                        <div class="input-group">
+                            <input type="text" name="nouveau_mot_de_passe" id="modalFormateurNouveauMdp"
+                                   class="form-control ctc-input font-monospace text-warning fw-bold"
+                                   placeholder="Minimum 6 caractères" required minlength="6">
+                            <button type="button" class="btn btn-outline-warning" onclick="genererMotDePasseFormateur()" title="Générer automatiquement">
+                                <i class="bi bi-shuffle me-1"></i>Générer
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="copierMotDePasseFormateur()" title="Copier">
+                                <i class="bi bi-clipboard" id="iconCopierMdpFormateur"></i>
+                            </button>
+                        </div>
+                        <div class="form-text text-white-50 small">
+                            Communiquez ce mot de passe au formateur. Il pourra ensuite se connecter et le modifier dans son profil.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-semibold">
+                        <i class="bi bi-shield-check me-1"></i>Valider la réinitialisation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function ouvrirModalResetFormateur(id, nom, whatsapp, actionUrl) {
+    document.getElementById('modalFormateurNom').textContent = nom;
+    document.getElementById('modalFormateurWhatsapp').textContent = whatsapp;
+    document.getElementById('formResetFormateur').action = actionUrl;
+    genererMotDePasseFormateur();
+    new bootstrap.Modal(document.getElementById('modalResetFormateur')).show();
+}
+
+function genererMotDePasseFormateur() {
+    const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$';
+    let pass = '';
+    for (let i = 0; i < 9; i++) {
+        pass += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    document.getElementById('modalFormateurNouveauMdp').value = pass;
+}
+
+function copierMotDePasseFormateur() {
+    const input = document.getElementById('modalFormateurNouveauMdp');
+    if (input && input.value) {
+        navigator.clipboard.writeText(input.value);
+        const icon = document.getElementById('iconCopierMdpFormateur');
+        if (icon) {
+            icon.classList.remove('bi-clipboard');
+            icon.classList.add('bi-check-lg');
+            setTimeout(() => {
+                icon.classList.remove('bi-check-lg');
+                icon.classList.add('bi-clipboard');
+            }, 2000);
+        }
+    }
+}
+</script>
 {% endblock %}

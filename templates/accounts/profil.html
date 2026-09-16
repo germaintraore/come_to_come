@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Profil – Come To Code{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-4" style="max-width: 960px;">
+
+        <!-- Fil d'ariane -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb ctc-breadcrumb py-2 px-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 small mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'accueil' %}" class="text-white-50 text-decoration-none"><i class="bi bi-house-door me-1"></i>Accueil</a>
+                </li>
+                {% if user.is_staff or user.is_superuser %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'admin_dashboard' %}" class="text-white-50 text-decoration-none"><i class="bi bi-shield-lock me-1"></i>Administration</a>
+                </li>
+                {% elif user.is_formateur %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard_formateur' %}" class="text-white-50 text-decoration-none"><i class="bi bi-person-badge me-1"></i>Espace Formateur</a>
+                </li>
+                {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'tableau_de_bord' %}" class="text-white-50 text-decoration-none"><i class="bi bi-speedometer2 me-1"></i>Mon Espace</a>
+                </li>
+                {% endif %}
+                <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
+                    <i class="bi bi-person-circle me-1"></i>Mon Profil
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Messages Django -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-dismissible fade show
+                    {% if message.tags == 'error' %}alert-danger
+                    {% elif message.tags == 'success' %}alert-success
+                    {% else %}alert-info{% endif %} mb-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Bannière d'en-tête de profil -->
+        <div class="p-3 p-md-4 rounded-4 mb-4 bg-dark border border-secondary border-opacity-25 shadow-sm">
+            <div class="d-flex flex-column flex-md-row align-items-center gap-3 text-center text-md-start">
+                <div class="position-relative">
+                    {% if user.avatar_url %}
+                    <img id="avatar-preview-header" src="{{ user.avatar_url }}" alt="{{ user.nom_complet }}"
+                         class="rounded-circle border border-2 border-primary object-fit-cover shadow"
+                         style="width: 80px; height: 80px;">
+                    {% else %}
+                    <div id="avatar-fallback-header" class="rounded-circle bg-primary bg-opacity-25 text-primary border border-2 border-primary d-flex align-items-center justify-content-center fw-bold fs-3 shadow"
+                         style="width: 80px; height: 80px;">
+                        {{ user.prenom|slice:":1"|upper }}{{ user.nom|slice:":1"|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 mb-1 flex-wrap">
+                        <h2 class="text-white fw-bold mb-0 fs-4">{{ user.nom_complet }}</h2>
+                        {% if user.is_superuser %}
+                        <span class="badge bg-danger"><i class="bi bi-shield-fill-check me-1"></i>Super Admin</span>
+                        {% elif user.is_staff %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-shield me-1"></i>Staff</span>
+                        {% elif user.is_formateur %}
+                        <span class="badge bg-success"><i class="bi bi-person-badge me-1"></i>Formateur</span>
+                        {% else %}
+                        <span class="badge bg-primary"><i class="bi bi-mortarboard-fill me-1"></i>Apprenant</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-white-50 small d-flex align-items-center justify-content-center justify-content-md-start gap-3 flex-wrap">
+                        <span><i class="bi bi-whatsapp text-success me-1"></i>{{ user.whatsapp }}</span>
+                        {% if user.is_formateur and user.formation_assignee %}
+                        <span><i class="bi bi-book-half text-info me-1"></i>{{ user.formation_assignee.nom }}</span>
+                        {% elif not user.is_staff and not user.is_formateur %}
+                        <span><i class="bi bi-book-half text-info me-1"></i>{{ user.get_formation_display }}</span>
+                        <span><i class="bi bi-calendar3 text-warning me-1"></i>Session {{ user.get_session_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Colonne 1 : Modifier le Profil (Nom, Prénoms, Photo) -->
+            <div class="col-lg-6">
+                <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4 shadow-sm h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <i class="bi bi-person-lines-fill text-primary fs-5"></i>
+                        <h5 class="text-white fw-bold mb-0">Informations personnelles</h5>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+
+                        <div class="mb-3">
+                            <label for="id_nom" class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-person me-1"></i>Nom de famille <span class="text-danger">*</span>
+                            </label>
+                            {{ form_profil.nom }}
+                            {% if form_profil.nom.errors %}
+                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form_profil.nom.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_prenom" class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-person me-1"></i>Prénoms <span class="text-danger">*</span>
+                            </label>
+                            {{ form_profil.prenom }}
+                            {% if form_profil.prenom.errors %}
+                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form_profil.prenom.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-whatsapp me-1 text-success"></i>Numéro WhatsApp
+                            </label>
+                            <input type="text" class="form-control bg-secondary bg-opacity-25 text-white-50 border-secondary"
+                                   value="{{ user.whatsapp }}" disabled readonly>
+                            <div class="form-text text-white-50 small">
+                                Votre identifiant unique de connexion. Contactez l'administrateur pour toute modification.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_photo_profil" class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-camera me-1 text-info"></i>Photo de profil (Avatar)
+                            </label>
+                            {{ form_profil.photo_profil }}
+                            <div class="form-text text-white-50 small">
+                                Formats acceptés : JPG, PNG, WEBM, GIF (Max 5 Mo).
+                            </div>
+                            {% if form_profil.photo_profil.errors %}
+                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form_profil.photo_profil.errors.0 }}</div>
+                            {% endif %}
+
+                            <!-- Aperçu de la nouvelle image sélectionnée -->
+                            <div id="live-photo-preview" class="d-none mt-3 p-2 rounded-3 bg-secondary bg-opacity-15 d-flex align-items-center gap-3">
+                                <img id="new-photo-img" src="" alt="Aperçu" class="rounded-circle object-fit-cover border border-info" style="width: 50px; height: 50px;">
+                                <div>
+                                    <div class="text-info small fw-semibold">Nouvelle photo sélectionnée</div>
+                                    <div id="new-photo-name" class="text-white-50 small"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary fw-semibold w-100 py-2">
+                            <i class="bi bi-check2-circle me-1"></i>Enregistrer les modifications
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Colonne 2 : Modifier le mot de passe -->
+            <div class="col-lg-6">
+                <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4 shadow-sm h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <i class="bi bi-shield-lock text-warning fs-5"></i>
+                        <h5 class="text-white fw-bold mb-0">Sécurité & Mot de passe</h5>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_password">
+
+                        <div class="mb-3">
+                            <label for="id_ancien_mot_de_passe" class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-key me-1"></i>Mot de passe actuel <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form_password.ancien_mot_de_passe }}
+                                <button class="btn btn-outline-secondary btn-toggle-pwd" type="button" data-target="id_ancien_mot_de_passe">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form_password.ancien_mot_de_passe.errors %}
+                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form_password.ancien_mot_de_passe.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_nouveau_mot_de_passe" class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-lock me-1"></i>Nouveau mot de passe <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form_password.nouveau_mot_de_passe }}
+                                <button class="btn btn-outline-secondary btn-toggle-pwd" type="button" data-target="id_nouveau_mot_de_passe">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text text-white-50 small">Minimum 8 caractères.</div>
+                            {% if form_password.nouveau_mot_de_passe.errors %}
+                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form_password.nouveau_mot_de_passe.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_confirmation_mot_de_passe" class="form-label text-white-50 small fw-semibold">
+                                <i class="bi bi-lock-fill me-1"></i>Confirmer le nouveau mot de passe <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form_password.confirmation_mot_de_passe }}
+                                <button class="btn btn-outline-secondary btn-toggle-pwd" type="button" data-target="id_confirmation_mot_de_passe">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form_password.confirmation_mot_de_passe.errors %}
+                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form_password.confirmation_mot_de_passe.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-warning text-dark fw-semibold w-100 py-2">
+                            <i class="bi bi-shield-check me-1"></i>Mettre à jour le mot de passe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Prévisualisation en direct de la photo de profil sélectionnée
+    const photoInput = document.getElementById('id_photo_profil');
+    const liveBox = document.getElementById('live-photo-preview');
+    const newImg = document.getElementById('new-photo-img');
+    const newName = document.getElementById('new-photo-name');
+
+    if (photoInput && liveBox) {
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const objectUrl = URL.createObjectURL(file);
+                newImg.src = objectUrl;
+                newName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} Ko)`;
+                liveBox.classList.remove('d-none');
+            } else {
+                liveBox.classList.add('d-none');
+            }
+        });
+    }
+
+    // 2. Bascule afficher / masquer le mot de passe
+    document.querySelectorAll('.btn-toggle-pwd').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

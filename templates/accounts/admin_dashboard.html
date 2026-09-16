@@ -197,6 +197,10 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="action-btns">
+                                            <button type="button" class="btn-action btn-action-warn" title="Réinitialiser le mot de passe"
+                                                onclick="ouvrirModalResetPassword('{{ a.id }}', '{{ a.nom_complet|escapejs }}', '{{ a.whatsapp|escapejs }}', '{% url 'admin_changer_mot_de_passe' a.pk %}')">
+                                                <i class="bi bi-key-fill text-warning"></i>
+                                            </button>
                                             <a href="{% url 'toggle_apprenant' a.pk %}"
                                                class="btn-action {% if a.is_active %}btn-action-warn{% else %}btn-action-success{% endif %}"
                                                title="{% if a.is_active %}Désactiver{% else %}Activer{% endif %}">
@@ -254,6 +258,10 @@
                                class="btn btn-outline-success btn-sm flex-fill">
                                 <i class="bi bi-whatsapp me-1"></i>{{ a.whatsapp }}
                             </a>
+                            <button type="button" class="btn btn-sm btn-outline-warning" title="Réinitialiser le mot de passe"
+                                onclick="ouvrirModalResetPassword('{{ a.id }}', '{{ a.nom_complet|escapejs }}', '{{ a.whatsapp|escapejs }}', '{% url 'admin_changer_mot_de_passe' a.pk %}')">
+                                <i class="bi bi-key-fill"></i>
+                            </button>
                             <a href="{% url 'toggle_apprenant' a.pk %}"
                                class="btn btn-sm {% if a.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
                                 <i class="bi {% if a.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
@@ -446,11 +454,7 @@
                     <i class="bi bi-trash3 me-1"></i>Supprimer
                 </a>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Réaffectation de session -->
+  <!-- Modal Réaffectation de session -->
 <div class="modal fade" id="modalReaffecter" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content ctc-modal">
@@ -486,6 +490,52 @@
     </div>
 </div>
 
+<!-- Modal Réinitialiser Mot de passe (Admin) -->
+<div class="modal fade" id="modalResetPassword" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ctc-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-white">
+                    <i class="bi bi-key-fill text-warning me-2"></i>Réinitialiser le mot de passe
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formResetPassword" method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div class="modal-body">
+                    <p class="text-white-50 mb-3">
+                        Définir un nouveau mot de passe pour <strong class="text-white" id="modalResetNom"></strong> (<span class="text-success" id="modalResetWhatsapp"></span>) :
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50 small">Nouveau mot de passe</label>
+                        <div class="input-group">
+                            <input type="text" name="nouveau_mot_de_passe" id="modalInputNouveauMdp"
+                                   class="form-control ctc-input font-monospace text-warning fw-bold"
+                                   placeholder="Minimum 6 caractères" required minlength="6">
+                            <button type="button" class="btn btn-outline-warning" onclick="genererMotDePasseAdmin()" title="Générer automatiquement">
+                                <i class="bi bi-shuffle me-1"></i>Générer
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="copierMotDePasse()" title="Copier">
+                                <i class="bi bi-clipboard" id="iconCopierMdp"></i>
+                            </button>
+                        </div>
+                        <div class="form-text text-white-50 small">
+                            Communiquez ce mot de passe à l'utilisateur. Il pourra le changer lui-même dans son profil.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-semibold">
+                        <i class="bi bi-shield-check me-1"></i>Valider la réinitialisation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -502,6 +552,39 @@
         var select = document.getElementById('modalSelectSession');
         if (select && sessionActuelle) { select.value = sessionActuelle; }
         new bootstrap.Modal(document.getElementById('modalReaffecter')).show();
+    }
+
+    function ouvrirModalResetPassword(id, nom, whatsapp, actionUrl) {
+        document.getElementById('modalResetNom').textContent = nom;
+        document.getElementById('modalResetWhatsapp').textContent = whatsapp;
+        document.getElementById('formResetPassword').action = actionUrl;
+        genererMotDePasseAdmin();
+        new bootstrap.Modal(document.getElementById('modalResetPassword')).show();
+    }
+
+    function genererMotDePasseAdmin() {
+        const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$';
+        let pass = '';
+        for (let i = 0; i < 9; i++) {
+            pass += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+        }
+        document.getElementById('modalInputNouveauMdp').value = pass;
+    }
+
+    function copierMotDePasse() {
+        const input = document.getElementById('modalInputNouveauMdp');
+        if (input && input.value) {
+            navigator.clipboard.writeText(input.value);
+            const icon = document.getElementById('iconCopierMdp');
+            if (icon) {
+                icon.classList.remove('bi-clipboard');
+                icon.classList.add('bi-check-lg');
+                setTimeout(() => {
+                    icon.classList.remove('bi-check-lg');
+                    icon.classList.add('bi-clipboard');
+                }, 2000);
+            }
+        }
     }
 
     // Mémoriser l'onglet actif lors de la navigation par filtres
