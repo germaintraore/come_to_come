@@ -1,26 +1,37 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Modifier la Ressource – {{ ressource.titre }}{% endblock %}
+{% block title %}Modifier la ressource – {{ ressource.titre }} – Come To Code{% endblock %}
 
 {% block content %}
 <div class="dashboard-wrapper">
-    <div class="container py-5" style="max-width: 720px;">
+    <div class="container py-4" style="max-width: 780px;">
+
+        <!-- Fil d'ariane -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb ctc-breadcrumb py-2 px-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 small mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'accueil' %}" class="text-white-50 text-decoration-none"><i class="bi bi-house-door me-1"></i>Accueil</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard_formateur' %}" class="text-white-50 text-decoration-none"><i class="bi bi-person-badge me-1"></i>Espace Formateur</a>
+                </li>
+                <li class="breadcrumb-item active text-warning fw-semibold" aria-current="page">
+                    <i class="bi bi-pencil-square me-1"></i>Modifier la ressource
+                </li>
+            </ol>
+        </nav>
 
         <!-- En-tête -->
-        <div class="mb-4">
-            <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary mb-3">
-                <i class="bi bi-arrow-left me-1"></i>Retour à mon espace
+        <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <span class="badge bg-warning text-dark mb-2"><i class="bi bi-pencil-square me-1"></i>Modification</span>
+                <h1 class="text-white fw-bold mb-0" style="font-size: 1.5rem;">Modifier la ressource</h1>
+                <p class="text-white-50 small mb-0">Mettez à jour le titre, la description, la session ou la visibilité.</p>
+            </div>
+            <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour
             </a>
-            <span class="badge bg-warning text-dark px-3 py-2 mb-2 d-inline-block">
-                <i class="bi bi-pencil-square me-1"></i>Modification
-            </span>
-            <h1 class="text-white fw-bold mt-2 mb-1" style="font-size: 1.6rem;">
-                Modifier la ressource
-            </h1>
-            <p class="text-white-50 mb-0">
-                Mettez à jour le titre, la description, la session ou la visibilité de cette ressource.
-            </p>
         </div>
 
         {% if messages %}
@@ -28,32 +39,30 @@
         <div class="alert alert-dismissible fade show
                     {% if message.tags == 'error' %}alert-danger
                     {% elif message.tags == 'success' %}alert-success
-                    {% else %}alert-info{% endif %}" role="alert">
+                    {% else %}alert-info{% endif %} mb-3" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         {% endfor %}
         {% endif %}
 
-        <div class="card bg-dark border border-secondary border-opacity-25 rounded-4 p-4 shadow">
+        <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4 shadow">
             <form method="post" novalidate>
                 {% csrf_token %}
 
                 <div class="mb-3">
                     <label for="id_titre" class="form-label text-white-50 small fw-semibold">
-                        Titre de la ressource <span class="text-danger">*</span>
+                        <i class="bi bi-fonts me-1"></i>Titre de la ressource <span class="text-danger">*</span>
                     </label>
                     {{ form.titre }}
                     {% if form.titre.errors %}
-                    <div class="text-danger small mt-1">
-                        <i class="bi bi-exclamation-circle me-1"></i>{{ form.titre.errors.0 }}
-                    </div>
+                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form.titre.errors.0 }}</div>
                     {% endif %}
                 </div>
 
                 <div class="mb-3">
                     <label for="id_description" class="form-label text-white-50 small fw-semibold">
-                        Description <span class="text-white-50">(optionnel)</span>
+                        <i class="bi bi-text-left me-1"></i>Description <span class="text-white-50 fw-normal">(optionnel)</span>
                     </label>
                     {{ form.description }}
                     {% if form.description.errors %}
@@ -64,7 +73,7 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label for="id_type_fichier" class="form-label text-white-50 small fw-semibold">
-                            Type de document <span class="text-danger">*</span>
+                            <i class="bi bi-file-earmark me-1"></i>Type de document <span class="text-danger">*</span>
                         </label>
                         {{ form.type_fichier }}
                         {% if form.type_fichier.errors %}
@@ -73,7 +82,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="id_session" class="form-label text-white-50 small fw-semibold">
-                            Session assignée <span class="text-danger">*</span>
+                            <i class="bi bi-calendar3 me-1"></i>Session assignée <span class="text-danger">*</span>
                         </label>
                         {{ form.session }}
                         {% if form.session.errors %}
@@ -82,7 +91,7 @@
                     </div>
                 </div>
 
-                <!-- Info fichier actuel avec aperçu intégré -->
+                <!-- Info fichier actuel -->
                 <div class="mb-3 p-3 bg-secondary bg-opacity-10 rounded-3 border border-secondary border-opacity-25">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
@@ -92,30 +101,30 @@
                             <i class="bi bi-camera-video text-primary fs-4"></i>
                             {% endif %}
                             <div>
-                                <div class="text-white small fw-bold">Fichier actuel : {{ ressource.fichier.name|slice:"11:" }}</div>
+                                <div class="text-white small fw-bold">{{ ressource.fichier.name|slice:"11:" }}</div>
                                 <div class="text-white-50 small">Taille : {{ ressource.taille_lisible }}</div>
                             </div>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-warning" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApercuActuel">
-                                <i class="bi bi-eye me-1"></i>Voir l'aperçu
+                            <button class="btn btn-sm btn-outline-warning" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseApercuActuel">
+                                <i class="bi bi-eye me-1"></i>Aperçu
                             </button>
                             <a href="{% url 'telecharger_ressource' ressource.pk %}" class="btn btn-sm btn-outline-info" target="_blank">
                                 <i class="bi bi-download me-1"></i>Télécharger
                             </a>
                         </div>
                     </div>
-
-                    <!-- Accordion d'aperçu intégré -->
+                    <!-- Accordion d'aperçu -->
                     <div class="collapse mt-3" id="collapseApercuActuel">
                         <div class="p-2 rounded-3 bg-black bg-opacity-50 border border-secondary border-opacity-25">
                             {% if ressource.type_fichier == 'pdf' %}
-                            <div class="ratio ratio-16x9" style="min-height: 420px;">
+                            <div class="ratio ratio-16x9" style="min-height: 380px;">
                                 <iframe src="{% url 'telecharger_ressource' ressource.pk %}" style="border:0;" allowfullscreen></iframe>
                             </div>
                             {% else %}
                             <div class="text-center">
-                                <video controls class="w-100 rounded-3" style="max-height: 380px;">
+                                <video controls class="w-100 rounded-3" style="max-height: 340px;">
                                     <source src="{% url 'telecharger_ressource' ressource.pk %}" type="video/mp4">
                                     Votre navigateur ne supporte pas la balise vidéo.
                                 </video>
@@ -126,19 +135,20 @@
                 </div>
 
                 <!-- Visibilité -->
-                <div class="mb-4 form-check form-switch">
+                <div class="mb-4 form-check form-switch p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25">
                     {{ form.est_visible }}
                     <label class="form-check-label text-white ms-2" for="id_est_visible">
-                        Ressource visible pour les apprenants de la session
+                        <i class="bi bi-eye me-1 text-success"></i>Ressource visible pour les apprenants de la session
                     </label>
                 </div>
 
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="submit" class="btn btn-warning fw-semibold">
+                <!-- Boutons d'action -->
+                <div class="d-flex gap-2 flex-wrap pt-2 border-top border-secondary border-opacity-25">
+                    <button type="submit" class="btn btn-warning fw-semibold px-4">
                         <i class="bi bi-check2-circle me-1"></i>Enregistrer les modifications
                     </button>
                     <a href="{% url 'reaffecter_ressource' ressource.pk %}" class="btn btn-outline-info">
-                        <i class="bi bi-arrow-left-right me-1"></i>Réaffecter à une autre session
+                        <i class="bi bi-arrow-left-right me-1"></i>Réaffecter
                     </a>
                     <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary">
                         Annuler

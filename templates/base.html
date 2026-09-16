@@ -22,7 +22,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-<body>
+<body class="{% if user.is_authenticated %}has-bottom-nav{% endif %}">
 
     <!-- ===== NAVBAR ===== -->
     <nav class="navbar navbar-expand-lg ctc-navbar sticky-top">
@@ -37,8 +37,21 @@
                 </div>
             </a>
 
+            <!-- Badge de rôle mobile -->
+            {% if user.is_authenticated %}
+            <div class="d-flex d-lg-none align-items-center ms-auto me-2">
+                {% if user.is_staff or user.is_superuser %}
+                <span class="badge bg-warning text-dark"><i class="bi bi-shield-lock-fill me-1"></i>Admin</span>
+                {% elif user.is_formateur %}
+                <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25"><i class="bi bi-person-badge-fill me-1"></i>Formateur</span>
+                {% else %}
+                <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25"><i class="bi bi-mortarboard-fill me-1"></i>Apprenant</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarMain">
+                data-bs-target="#navbarMain" aria-label="Menu de navigation">
                 <i class="bi bi-list fs-4 text-white"></i>
             </button>
 
@@ -62,7 +75,7 @@
                         <li class="nav-item">
                             <a class="nav-link ctc-nav-link text-info {% if request.resolver_match.url_name == 'dashboard_formateur' %}active{% endif %}"
                                 href="{% url 'dashboard_formateur' %}">
-                                <i class="bi bi-person-badge-fill me-1"></i>Espace formateur
+                                <i class="bi bi-person-badge-fill me-1"></i>Espace Formateur
                             </a>
                         </li>
                         {% else %}
@@ -75,15 +88,60 @@
                         <li class="nav-item">
                             <a class="nav-link ctc-nav-link {% if request.resolver_match.url_name == 'liste_devoirs' %}active{% endif %}"
                                 href="{% url 'liste_devoirs' %}">
-                                <i class="bi bi-journal-check me-1"></i>Mes devoirs
+                                <i class="bi bi-journal-check me-1"></i>Mes Devoirs
                             </a>
                         </li>
                         {% endif %}
 
-                        <li class="nav-item ms-2">
-                            <a class="btn ctc-btn-outline-light btn-sm" href="{% url 'deconnexion' %}">
-                                <i class="bi bi-box-arrow-right me-1"></i>Déconnexion
+                        <!-- Menu déroulant Profil / Compte -->
+                        <li class="nav-item dropdown ms-lg-2">
+                            <a class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2"
+                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-6"></i>
+                                <span class="d-none d-xl-inline text-white small fw-semibold">{{ user.prenom }}</span>
+                                {% if user.is_staff or user.is_superuser %}
+                                <span class="badge bg-warning text-dark d-none d-lg-inline-block">Admin</span>
+                                {% elif user.is_formateur %}
+                                <span class="badge bg-info bg-opacity-25 text-info d-none d-lg-inline-block">Formateur</span>
+                                {% else %}
+                                <span class="badge bg-primary bg-opacity-25 text-primary d-none d-lg-inline-block">Apprenant</span>
+                                {% endif %}
                             </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow border border-secondary border-opacity-25">
+                                <li class="px-3 py-2 border-bottom border-secondary border-opacity-25">
+                                    <div class="fw-bold text-white small">{{ user.nom_complet }}</div>
+                                    <div class="text-white-50 small">{{ user.whatsapp }}</div>
+                                </li>
+                                {% if user.is_formateur %}
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'dashboard_formateur' %}">
+                                        <i class="bi bi-person-badge text-info me-2"></i>Mon Espace Formateur
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'ajouter_ressource' %}">
+                                        <i class="bi bi-cloud-upload text-warning me-2"></i>Ajouter une ressource
+                                    </a>
+                                </li>
+                                {% elif not user.is_staff and not user.is_superuser %}
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'tableau_de_bord' %}">
+                                        <i class="bi bi-speedometer2 text-primary me-2"></i>Mon Tableau de bord
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'liste_devoirs' %}">
+                                        <i class="bi bi-journal-check text-success me-2"></i>Mes Devoirs & QCM
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider border-secondary border-opacity-25"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger py-2" href="{% url 'deconnexion' %}">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     {% else %}
                     <li class="nav-item">
@@ -114,14 +172,84 @@
                 {% else %}<i class="bi bi-bell-fill fs-5"></i>{% endif %}
                 <span>{{ message }}</span>
             </div>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Fermer"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
     <!-- ===== CONTENU PRINCIPAL ===== -->
-    {% block content %}{% endblock %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===== BARRE DE NAVIGATION INFÉRIEURE FIXE (SMARTPHONE < 768px) ===== -->
+    {% if user.is_authenticated %}
+    <nav class="ctc-mobile-bottom-nav d-md-none" aria-label="Navigation mobile principale">
+        <ul class="nav d-flex justify-content-around align-items-center mb-0 list-unstyled">
+            <li class="nav-item">
+                <a href="{% url 'accueil' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'accueil' %}active{% endif %}">
+                    <i class="bi bi-house-door"></i>
+                    <span>Accueil</span>
+                </a>
+            </li>
+
+            {% if user.is_staff or user.is_superuser %}
+            <li class="nav-item">
+                <a href="{% url 'admin_dashboard' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Admin</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'liste_formateurs' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'liste_formateurs' %}active{% endif %}">
+                    <i class="bi bi-people"></i>
+                    <span>Formateurs</span>
+                </a>
+            </li>
+            {% elif user.is_formateur %}
+            <li class="nav-item">
+                <a href="{% url 'dashboard_formateur' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'dashboard_formateur' %}active{% endif %}">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Mon Espace</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'ajouter_ressource' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'ajouter_ressource' %}active{% endif %}">
+                    <i class="bi bi-cloud-upload"></i>
+                    <span>Ressource</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'creer_devoir' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'creer_devoir' %}active{% endif %}">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Devoir</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a href="{% url 'tableau_de_bord' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'tableau_de_bord' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Tableau</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'liste_devoirs' %}" class="mobile-nav-btn {% if request.resolver_match.url_name == 'liste_devoirs' %}active{% endif %}">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Devoirs</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="nav-item">
+                <a href="{% url 'deconnexion' %}" class="mobile-nav-btn text-danger">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Quitter</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
 
     <!-- ===== FOOTER ===== -->
     <footer class="ctc-footer mt-auto">

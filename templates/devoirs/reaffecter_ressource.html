@@ -1,26 +1,37 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Réaffecter la Ressource – {{ ressource.titre }}{% endblock %}
+{% block title %}Réaffecter : {{ ressource.titre }} – Come To Code{% endblock %}
 
 {% block content %}
 <div class="dashboard-wrapper">
-    <div class="container py-5" style="max-width: 760px;">
+    <div class="container py-4" style="max-width: 780px;">
+
+        <!-- Fil d'ariane -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb ctc-breadcrumb py-2 px-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 small mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'accueil' %}" class="text-white-50 text-decoration-none"><i class="bi bi-house-door me-1"></i>Accueil</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard_formateur' %}" class="text-white-50 text-decoration-none"><i class="bi bi-person-badge me-1"></i>Espace Formateur</a>
+                </li>
+                <li class="breadcrumb-item active text-warning fw-semibold" aria-current="page">
+                    <i class="bi bi-arrow-left-right me-1"></i>Réaffecter
+                </li>
+            </ol>
+        </nav>
 
         <!-- En-tête -->
-        <div class="mb-4">
-            <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary mb-3">
-                <i class="bi bi-arrow-left me-1"></i>Retour à mon espace
+        <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <span class="badge bg-warning text-dark mb-2"><i class="bi bi-arrow-left-right me-1"></i>Gestion des Sessions</span>
+                <h1 class="text-white fw-bold mb-0" style="font-size: 1.5rem;">Réaffecter une ressource pédagogique</h1>
+                <p class="text-white-50 small mb-0">Attribuez ce document ou cette vidéo à une autre session d'apprenants.</p>
+            </div>
+            <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour
             </a>
-            <span class="badge bg-warning text-dark px-3 py-2 mb-2 d-inline-block">
-                <i class="bi bi-arrow-left-right me-1"></i>Gestion des Sessions
-            </span>
-            <h1 class="text-white fw-bold mt-2 mb-1" style="font-size: 1.6rem;">
-                Réaffecter une ressource pédagogique
-            </h1>
-            <p class="text-white-50 mb-0">
-                Attribuez ce document ou cette vidéo à une autre session d'apprenants.
-            </p>
         </div>
 
         {% if messages %}
@@ -28,32 +39,32 @@
         <div class="alert alert-dismissible fade show
                     {% if message.tags == 'error' %}alert-danger
                     {% elif message.tags == 'success' %}alert-success
-                    {% else %}alert-info{% endif %}" role="alert">
+                    {% else %}alert-info{% endif %} mb-3" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         {% endfor %}
         {% endif %}
 
-        <!-- Carte d'information sur la ressource actuelle -->
-        <div class="card bg-dark border border-secondary border-opacity-25 rounded-4 p-3 mb-4 shadow-sm">
+        <!-- Carte de la ressource actuelle -->
+        <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-3 mb-4 shadow-sm">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 text-center" style="background: rgba(255,255,255,0.05); min-width: 54px;">
+                    <div class="rounded-3 p-2 text-center" style="background: rgba(255,255,255,0.05); min-width: 48px;">
                         {% if ressource.type_fichier == 'pdf' %}
-                        <i class="bi bi-file-earmark-pdf-fill text-danger fs-3"></i>
+                        <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
                         {% else %}
-                        <i class="bi bi-camera-video-fill text-primary fs-3"></i>
+                        <i class="bi bi-camera-video-fill text-primary fs-4"></i>
                         {% endif %}
                     </div>
                     <div>
-                        <h5 class="text-white mb-1 fw-bold">{{ ressource.titre }}</h5>
+                        <h6 class="text-white mb-1 fw-bold">{{ ressource.titre }}</h6>
                         <div class="d-flex flex-wrap gap-2 align-items-center">
                             <span class="badge bg-secondary bg-opacity-50 text-white-50 small">
                                 <i class="bi bi-mortarboard me-1"></i>{{ ressource.formation }}
                             </span>
                             <span class="badge bg-info bg-opacity-25 text-info small">
-                                Session actuelle : {{ ressource.get_session_display }}
+                                Session : {{ ressource.get_session_display }}
                             </span>
                             <span class="text-white-50 small">
                                 <i class="bi bi-hdd me-1"></i>{{ ressource.taille_lisible }}
@@ -61,21 +72,19 @@
                         </div>
                     </div>
                 </div>
-                <div>
-                    <a href="{% url 'telecharger_ressource' ressource.pk %}" class="btn btn-sm btn-outline-info" target="_blank" title="Aperçu">
-                        <i class="bi bi-eye me-1"></i>Aperçu
-                    </a>
-                </div>
+                <a href="{% url 'telecharger_ressource' ressource.pk %}" class="btn btn-sm btn-outline-info" target="_blank">
+                    <i class="bi bi-eye me-1"></i>Aperçu
+                </a>
             </div>
         </div>
 
         <!-- Formulaire de réaffectation -->
-        <div class="card bg-dark border border-secondary border-opacity-25 rounded-4 p-4 shadow">
+        <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4 shadow">
             <form method="post" novalidate>
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
-                <div class="alert alert-danger mb-4">
+                <div class="alert alert-danger mb-3">
                     {% for error in form.non_field_errors %}
                     <div><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ error }}</div>
                     {% endfor %}
@@ -85,13 +94,11 @@
                 <!-- 1. Sélection de la nouvelle session -->
                 <div class="mb-4">
                     <label for="id_session_cible" class="form-label text-white-50 small fw-semibold">
-                        Nouvelle session cible <span class="text-danger">*</span>
+                        <i class="bi bi-calendar3 me-1"></i>Nouvelle session cible <span class="text-danger">*</span>
                     </label>
                     {{ form.session_cible }}
                     {% if form.session_cible.errors %}
-                    <div class="text-danger small mt-1">
-                        <i class="bi bi-exclamation-circle me-1"></i>{{ form.session_cible.errors.0 }}
-                    </div>
+                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form.session_cible.errors.0 }}</div>
                     {% endif %}
                     <div class="form-text text-white-50 small mt-1">
                         Sélectionnez le mois de la promotion à laquelle vous voulez ouvrir l'accès à ce cours.
@@ -101,12 +108,11 @@
                 <!-- 2. Choix du mode : Dupliquer ou Déplacer -->
                 <div class="mb-4">
                     <label class="form-label text-white-50 small fw-semibold d-block">
-                        Mode de réaffectation <span class="text-danger">*</span>
+                        <i class="bi bi-sliders me-1"></i>Mode de réaffectation <span class="text-danger">*</span>
                     </label>
-
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="card bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-3 p-3 h-100 d-block cursor-pointer position-relative">
+                            <label class="card bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-3 p-3 h-100 d-block" style="cursor:pointer;">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="mode" id="mode_dupliquer" value="dupliquer"
                                            {% if form.mode.value == 'dupliquer' or not form.mode.value %}checked{% endif %}>
@@ -115,13 +121,12 @@
                                     </span>
                                 </div>
                                 <p class="text-white-50 small mb-0 mt-2 ps-4">
-                                    Crée une copie pour la nouvelle session. Les apprenants de la session <strong>{{ ressource.get_session_display }}</strong> continuent d'y avoir accès.
+                                    Crée une copie pour la nouvelle session. Les apprenants de <strong>{{ ressource.get_session_display }}</strong> continuent d'y accéder.
                                 </p>
                             </label>
                         </div>
-
                         <div class="col-md-6">
-                            <label class="card bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-3 p-3 h-100 d-block cursor-pointer position-relative">
+                            <label class="card bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-3 p-3 h-100 d-block" style="cursor:pointer;">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="mode" id="mode_deplacer" value="deplacer"
                                            {% if form.mode.value == 'deplacer' %}checked{% endif %}>
@@ -135,24 +140,20 @@
                             </label>
                         </div>
                     </div>
-
                     {% if form.mode.errors %}
-                    <div class="text-danger small mt-2">
-                        <i class="bi bi-exclamation-circle me-1"></i>{{ form.mode.errors.0 }}
-                    </div>
+                    <div class="text-danger small mt-2"><i class="bi bi-exclamation-circle me-1"></i>{{ form.mode.errors.0 }}</div>
                     {% endif %}
                 </div>
 
                 <!-- 3. Nouveau titre optionnel -->
                 <div class="mb-4">
                     <label for="id_nouveau_titre" class="form-label text-white-50 small fw-semibold">
-                        Titre de la ressource
+                        <i class="bi bi-fonts me-1"></i>Titre de la ressource
+                        <span class="text-white-50 fw-normal">(optionnel)</span>
                     </label>
                     {{ form.nouveau_titre }}
                     {% if form.nouveau_titre.errors %}
-                    <div class="text-danger small mt-1">
-                        <i class="bi bi-exclamation-circle me-1"></i>{{ form.nouveau_titre.errors.0 }}
-                    </div>
+                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form.nouveau_titre.errors.0 }}</div>
                     {% endif %}
                     <div class="form-text text-white-50 small mt-1">
                         Vous pouvez ajuster le titre pour la nouvelle session (ex : « {{ ressource.titre }} — Session suivante »).
@@ -160,7 +161,7 @@
                 </div>
 
                 <!-- Boutons d'action -->
-                <div class="d-flex gap-2 pt-2 flex-wrap">
+                <div class="d-flex gap-2 pt-2 flex-wrap border-top border-secondary border-opacity-25">
                     <button type="submit" class="btn btn-warning fw-semibold px-4">
                         <i class="bi bi-check2-circle me-1"></i>Valider la réaffectation
                     </button>
@@ -174,13 +175,4 @@
 
     </div>
 </div>
-
-<style>
-.cursor-pointer {
-    cursor: pointer;
-}
-.cursor-pointer:hover {
-    border-color: rgba(255, 193, 7, 0.4) !important;
-}
-</style>
 {% endblock %}

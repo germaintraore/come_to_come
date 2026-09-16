@@ -889,3 +889,260 @@ a:hover { text-decoration: none; }
 .ctc-nav-link.admin-link {
   color: #fcd34d !important;
 }
+
+/* ============================================================
+   REFONTE NAVIGATION & ERGONOMIE (MOBILE & PC)
+   ============================================================ */
+
+/* Barre de navigation inférieure fixe pour smartphone */
+.ctc-mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 14, 26, 0.96);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  z-index: 1045;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.ctc-mobile-bottom-nav .nav-item {
+  flex: 1;
+  text-align: center;
+}
+
+.ctc-mobile-bottom-nav .mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.25rem 0;
+  transition: all 0.2s ease;
+  min-height: 46px;
+}
+
+.ctc-mobile-bottom-nav .mobile-nav-btn i {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+  transition: transform 0.2s ease;
+}
+
+.ctc-mobile-bottom-nav .mobile-nav-btn.active,
+.ctc-mobile-bottom-nav .mobile-nav-btn:hover {
+  color: var(--ctc-yellow);
+}
+
+.ctc-mobile-bottom-nav .mobile-nav-btn.active i {
+  transform: translateY(-2px);
+}
+
+/* Espace réservé en bas de page sur mobile pour éviter que le contenu ne soit masqué par la bottom bar */
+@media (max-width: 767.98px) {
+  body.has-bottom-nav {
+    padding-bottom: 74px !important;
+  }
+}
+
+/* Onglets professionnels (Anti-Scroll Tabs) */
+.ctc-nav-pills {
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.ctc-nav-pills .nav-link {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+}
+
+.ctc-nav-pills .nav-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ctc-nav-pills .nav-link.active {
+  color: #000 !important;
+  background: var(--ctc-yellow) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.ctc-nav-pills .nav-link.active .badge {
+  background: #000 !important;
+  color: var(--ctc-yellow) !important;
+}
+
+/* KPI Cards de résumé en haut de tableau de bord */
+.kpi-mini-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.kpi-mini-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.kpi-mini-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+/* Cartes Mobile (pour remplacer les tableaux trop larges sur smartphone) */
+.mobile-card-row {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.mobile-card-row:active {
+  background: var(--surface-2);
+}
+
+.mobile-card-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Fil d'Ariane */
+.ctc-breadcrumb {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* ============================================================
+   TABS NAVIGATION SYSTÈME (ctc-nav-tab)
+   Utilisé par : dashboard_formateur, tableau_de_bord, admin_dashboard
+   ============================================================ */
+.ctc-nav-tabs {
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.ctc-nav-tab {
+  color: rgba(255, 255, 255, 0.65);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 1rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ctc-nav-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ctc-nav-tab.active {
+  color: #000 !important;
+  background: var(--ctc-yellow) !important;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+.ctc-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  color: inherit;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  min-width: 20px;
+  line-height: 1.5;
+}
+
+.ctc-nav-tab.active .ctc-tab-badge {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #000 !important;
+}
+
+@media (max-width: 575px) {
+  .ctc-nav-tab {
+    font-size: 0.78rem;
+    padding: 0.45rem 0.7rem;
+  }
+  .ctc-nav-tab span:not(.ctc-tab-badge) {
+    display: none;
+  }
+}
+
+/* ============================================================
+   CARTES MOBILES (mobile-card-item)
+   Utilisé dans les dashboards pour remplacer les tableaux sur mobile
+   ============================================================ */
+.mobile-card-item {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+  transition: border-color 0.2s ease;
+}
+
+.mobile-card-item:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Action buttons supplémentaires */
+.btn-action-info {
+  background: rgba(6, 182, 212, 0.15);
+  color: #67e8f9;
+}
+.btn-action-info:hover {
+  background: rgba(6, 182, 212, 0.3);
+}
+.btn-action-primary {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--ctc-blue-light);
+}
+.btn-action-primary:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* Classe utilitaire */
+.min-w-0 { min-width: 0; }
+
