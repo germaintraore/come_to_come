@@ -28,5 +28,7 @@ urlpatterns = [
     # ===== RESSOURCES PÉDAGOGIQUES =====
     path('ressources/ajouter/', views.ajouter_ressource, name='ajouter_ressource'),
     path('ressources/<int:pk>/telecharger/', views.telecharger_ressource, name='telecharger_ressource'),
+    path('ressources/<int:pk>/modifier/', views.modifier_ressource, name='modifier_ressource'),
+    path('ressources/<int:pk>/reaffecter/', views.reaffecter_ressource, name='reaffecter_ressource'),
     path('ressources/<int:pk>/supprimer/', views.supprimer_ressource, name='supprimer_ressource'),
 ]

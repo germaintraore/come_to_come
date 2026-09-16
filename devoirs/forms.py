@@ -1,6 +1,6 @@
 from django import forms
 from .models import Devoir, Question, RessourcePedagogique
-from accounts.models import Formation
+from accounts.models import Formation, Apprenant
 
 
 TAILLE_MAX_OCTETS = 50 * 1024 * 1024  # 50 Mo en octets
@@ -256,3 +256,87 @@ class RessourceForm(forms.ModelForm):
             )
 
         return fichier
+
+
+class ReaffecterRessourceForm(forms.Form):
+    """
+    Formulaire pour réaffecter une ressource pédagogique à une autre session.
+    Offre deux modes :
+    - Dupliquer : crée une nouvelle entrée pour la nouvelle session (la session actuelle conserve la ressource)
+    - Déplacer : réassigne la ressource directement vers la nouvelle session
+    """
+    MODE_CHOICES = [
+        ('dupliquer', 'Dupliquer pour la nouvelle session (Recommandé : la session actuelle conserve l\'accès)'),
+        ('deplacer', 'Déplacer vers la nouvelle session (La session actuelle ne verra plus la ressource)'),
+    ]
+
+    session_cible = forms.ChoiceField(
+        choices=Apprenant.SESSION_MOIS_CHOICES,
+        label="Nouvelle session *",
+        widget=forms.Select(attrs={'class': 'form-select bg-dark text-white border-secondary'})
+    )
+    mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        initial='dupliquer',
+        label="Mode de réaffectation *",
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'})
+    )
+    nouveau_titre = forms.CharField(
+        max_length=200,
+        required=False,
+        label="Titre pour la nouvelle session",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control bg-dark text-white border-secondary',
+            'placeholder': 'Conserver le même titre ou saisir un nouveau'
+        }),
+        help_text="Optionnel : vous pouvez préciser le titre (ex : « Cours Python — Février »)"
+    )
+
+    def __init__(self, *args, ressource_actuelle=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ressource_actuelle = ressource_actuelle
+        if ressource_actuelle and not self.is_bound:
+            self.fields['nouveau_titre'].initial = ressource_actuelle.titre
+
+    def clean(self):
+        cleaned_data = super().clean()
+        session_cible = cleaned_data.get('session_cible')
+        mode = cleaned_data.get('mode')
+
+        if self.ressource_actuelle and session_cible == self.ressource_actuelle.session:
+            if mode == 'deplacer':
+                raise forms.ValidationError(
+                    f"Cette ressource est déjà assignée à la session {self.ressource_actuelle.get_session_display()}. "
+                    "Veuillez choisir une session différente pour la déplacer."
+                )
+        return cleaned_data
+
+
+class ModifierRessourceForm(forms.ModelForm):
+    """
+    Formulaire permettant de modifier une ressource existante (titre, description, session, visibilité).
+    """
+    class Meta:
+        model = RessourcePedagogique
+        fields = ['titre', 'description', 'session', 'type_fichier', 'est_visible']
+        widgets = {
+            'titre': forms.TextInput(attrs={
+                'class': 'form-control bg-dark text-white border-secondary',
+                'placeholder': 'Titre de la ressource'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control bg-dark text-white border-secondary',
+                'rows': 3,
+                'placeholder': 'Description / résumé'
+            }),
+            'session': forms.Select(attrs={
+                'class': 'form-select bg-dark text-white border-secondary'
+            }),
+            'type_fichier': forms.Select(attrs={
+                'class': 'form-select bg-dark text-white border-secondary'
+            }),
+            'est_visible': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }
+

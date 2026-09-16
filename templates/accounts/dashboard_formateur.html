@@ -314,6 +314,16 @@
                             <td class="text-white-50 small">{{ r.date_ajout|date:"d/m/Y à H:i" }}</td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'reaffecter_ressource' r.pk %}"
+                                       class="btn btn-outline-warning"
+                                       title="Réaffecter / Dupliquer pour une autre session">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </a>
+                                    <a href="{% url 'modifier_ressource' r.pk %}"
+                                       class="btn btn-outline-light"
+                                       title="Modifier la ressource">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
                                     <a href="{% url 'telecharger_ressource' r.pk %}"
                                        class="btn btn-outline-success"
                                        title="Télécharger / Prévisualiser">

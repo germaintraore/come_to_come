@@ -15,7 +15,10 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 from accounts.models import Apprenant, Formation
 from .models import Devoir, Question, Soumission, ReponseApprenant, RessourcePedagogique
-from .forms import DevoirForm, QuestionForm, DupliquerDevoirForm, RessourceForm
+from .forms import (
+    DevoirForm, QuestionForm, DupliquerDevoirForm, RessourceForm,
+    ReaffecterRessourceForm, ModifierRessourceForm
+)
 
 
 def _est_formateur_ou_staff(user):
@@ -739,4 +742,106 @@ def supprimer_ressource(request, pk):
     # Page de confirmation (GET)
     return render(request, 'devoirs/confirmer_suppression_ressource.html', {
         'ressource': ressource
+    })
+
+
+@login_required
+@formateur_required
+def reaffecter_ressource(request, pk):
+    """
+    Permet à un formateur de réaffecter une ressource pédagogique à une autre session :
+    - Soit en déplaçant la ressource (mise à jour directe du champ session)
+    - Soit en la dupliquant (création d'une nouvelle ressource avec copie du fichier physique)
+    """
+    import os as _os
+    from django.core.files.base import ContentFile
+
+    ressource = get_object_or_404(RessourcePedagogique, pk=pk)
+
+    # Sécurité : seul le formateur propriétaire ou admin
+    if not (request.user.is_staff or request.user.is_superuser):
+        if ressource.formateur != request.user:
+            messages.error(request, "Vous ne pouvez réaffecter que vos propres ressources.")
+            return redirect('dashboard_formateur')
+
+    if request.method == 'POST':
+        form = ReaffecterRessourceForm(request.POST, ressource_actuelle=ressource)
+        if form.is_valid():
+            session_cible = form.cleaned_data['session_cible']
+            mode = form.cleaned_data['mode']
+            nouveau_titre = form.cleaned_data.get('nouveau_titre') or ressource.titre
+
+            if mode == 'deplacer':
+                ressource.session = session_cible
+                ressource.titre = nouveau_titre
+                ressource.save()
+                messages.success(
+                    request,
+                    f"✅ La ressource « {ressource.titre} » a été déplacée vers la session {ressource.get_session_display()} avec succès."
+                )
+                return redirect('dashboard_formateur')
+            else:  # mode == 'dupliquer'
+                try:
+                    nom_fichier = _os.path.basename(ressource.fichier.name)
+                    with ressource.fichier.open('rb') as f:
+                        fichier_copie = ContentFile(f.read(), name=nom_fichier)
+
+                    nouvelle_ressource = RessourcePedagogique.objects.create(
+                        titre=nouveau_titre,
+                        description=ressource.description,
+                        fichier=fichier_copie,
+                        type_fichier=ressource.type_fichier,
+                        formation=ressource.formation,
+                        session=session_cible,
+                        formateur=request.user,
+                        est_visible=ressource.est_visible,
+                    )
+                    messages.success(
+                        request,
+                        f"✅ La ressource « {nouvelle_ressource.titre} » a été dupliquée pour la session {nouvelle_ressource.get_session_display()} avec succès."
+                    )
+                    return redirect('dashboard_formateur')
+                except FileNotFoundError:
+                    messages.error(request, "Impossible de dupliquer : le fichier source est introuvable sur le serveur.")
+                except Exception as e:
+                    messages.error(request, f"Erreur lors de la duplication de la ressource : {str(e)}")
+        else:
+            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+    else:
+        form = ReaffecterRessourceForm(ressource_actuelle=ressource)
+
+    return render(request, 'devoirs/reaffecter_ressource.html', {
+        'form': form,
+        'ressource': ressource,
+    })
+
+
+@login_required
+@formateur_required
+def modifier_ressource(request, pk):
+    """
+    Permet à un formateur de modifier les informations d'une ressource existante
+    (titre, description, session, type, visibilité).
+    """
+    ressource = get_object_or_404(RessourcePedagogique, pk=pk)
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        if ressource.formateur != request.user:
+            messages.error(request, "Vous ne pouvez modifier que vos propres ressources.")
+            return redirect('dashboard_formateur')
+
+    if request.method == 'POST':
+        form = ModifierRessourceForm(request.POST, instance=ressource)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"✅ La ressource « {ressource.titre} » a été mise à jour avec succès.")
+            return redirect('dashboard_formateur')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+    else:
+        form = ModifierRessourceForm(instance=ressource)
+
+    return render(request, 'devoirs/modifier_ressource.html', {
+        'form': form,
+        'ressource': ressource,
     })
