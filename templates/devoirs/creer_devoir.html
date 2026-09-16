@@ -15,9 +15,15 @@
                         <span class="badge bg-primary mb-2">Administration</span>
                         <h2 class="text-white mb-0">Nouveau Devoir</h2>
                     </div>
+                    {% if request.user.is_staff or request.user.is_superuser %}
                     <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">
                         <i class="bi bi-arrow-left me-1"></i>Retour au panel
                     </a>
+                    {% else %}
+                    <a href="{% url 'dashboard_formateur' %}" class="btn btn-secondary-ctc">
+                        <i class="bi bi-arrow-left me-1"></i>Retour à mon espace
+                    </a>
+                    {% endif %}
                 </div>
 
                 <!-- Formulaire Card -->
@@ -75,7 +81,11 @@
 
                         <!-- Boutons d'action -->
                         <div class="d-flex justify-content-end gap-2">
+                            {% if request.user.is_staff or request.user.is_superuser %}
                             <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Annuler</a>
+                            {% else %}
+                            <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary">Annuler</a>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary px-4">
                                 <i class="bi bi-check-circle me-1"></i>Enregistrer le devoir
                             </button>

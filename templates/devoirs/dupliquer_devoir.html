@@ -38,7 +38,11 @@
 
 
                         <div class="d-flex gap-2">
+                            {% if request.user.is_staff or request.user.is_superuser %}
                             <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc w-50">Annuler</a>
+                            {% else %}
+                            <a href="{% url 'dashboard_formateur' %}" class="btn btn-secondary-ctc w-50">Annuler</a>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary w-50">
                                 <i class="bi bi-check-lg me-1"></i>Dupliquer & Affecter
                             </button>

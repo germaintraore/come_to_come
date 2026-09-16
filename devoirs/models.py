@@ -13,9 +13,11 @@ class Devoir(models.Model):
 
     titre       = models.CharField(max_length=200, verbose_name="Titre du devoir")
     
-    formation=models.CharField(max_length=50,
-    verbose_name="Formation concernée",
-    default='initation en informatique')
+    formation = models.CharField(
+        max_length=50,
+        verbose_name="Formation concernée",
+        default='initiation'
+    )
     session = models.CharField(max_length=20,choices=Apprenant.SESSION_MOIS_CHOICES,
                 default='janvier',verbose_name="Session du devoir")
     description = models.TextField(blank=True, verbose_name="Description / consignes")

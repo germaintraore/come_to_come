@@ -28,6 +28,13 @@ class DevoirForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['formation'].widget = forms.Select(
+            choices=Formation.get_choices(only_active=True),
+            attrs={'class': 'form-select'}
+        )
+
 
 class QuestionForm(forms.ModelForm):
     class Meta:

@@ -81,25 +81,36 @@
             </div>
         </div>
 
-        <!-- Section 1 : Liste des Apprenants avec Filtre par Session -->
+        <!-- Section 1 : Liste des Apprenants avec Filtre par Session et Recherche -->
         <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 mb-5 overflow-hidden">
             <div
                 class="p-3 border-bottom border-secondary border-opacity-25 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <h5 class="text-white mb-0">
                     <i class="bi bi-mortarboard text-primary me-2"></i>Mes Apprenants ({{ total_apprenants }})
                 </h5>
-                <!-- Filtre par session (mois) -->
-                <form method="get" class="d-flex align-items-center gap-2">
-                    <label class="text-white-50 small text-nowrap">Session :</label>
-                    <select name="session" class="form-select form-select-sm bg-dark text-white border-secondary"
+                <!-- Filtre par session et Recherche -->
+                <form method="get" class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-dark text-white-50 border-secondary"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" value="{{ search|default:'' }}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Nom ou WhatsApp...">
+                    </div>
+                    <select name="session" class="form-select form-select-sm bg-dark text-white border-secondary" style="width: auto;"
                         onchange="this.form.submit()">
                         <option value="">Toutes les sessions</option>
                         {% for code_s, nom_s in session_choices %}
-                        <option value="{{ code_s }}" {% if session_selectionnee==code_s %}selected{% endif %}>
+                        <option value="{{ code_s }}" {% if session_selectionnee == code_s %}selected{% endif %}>
                             {{ nom_s }}
                         </option>
                         {% endfor %}
                     </select>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-funnel me-1"></i>Filtrer
+                    </button>
+                    {% if search or session_selectionnee %}
+                    <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary" title="Réinitialiser">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    {% endif %}
                 </form>
             </div>
 
@@ -113,9 +124,8 @@
                             <th>Session</th>
                             <th>Date d'inscription</th>
                             <th class="text-center">Statut</th>
-                            <th class="text-center">Notes & Copie</th>
+                            <th class="text-center">Notes & Copies</th>
                         </tr>
-
                     </thead>
                     <tbody>
                         {% for a in apprenants %}
@@ -143,17 +153,16 @@
                             </td>
                             <td class="text-center">
                                 <a href="{% url 'formateur_notes_apprenant' a.pk %}"
-                                    class="btn btn-sm ctc-btn-hero-outline-info border-info"
+                                    class="btn btn-sm btn-outline-info"
                                     title="Voir les notes et copies">
-                                    <i class="bi bi-eye"></i>
+                                    <i class="bi bi-eye me-1"></i>Voir les notes
                                 </a>
                             </td>
-
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-white-50">
-                                Aucun apprenant inscrit dans cette formation pour le moment.
+                            <td colspan="7" class="text-center py-4 text-white-50">
+                                {% if search %}Aucun apprenant ne correspond à "{{ search }}".{% else %}Aucun apprenant inscrit dans cette formation pour le moment.{% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -164,10 +173,13 @@
 
         <!-- Section 2 : Devoirs liés à cette Formation -->
         <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden">
-            <div class="p-3 border-bottom border-secondary border-opacity-25">
+            <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
                 <h5 class="text-white mb-0">
-                    <i class="bi bi-journal-check text-primary me-2"></i>Devoirs & QCM de la formation
+                    <i class="bi bi-journal-check text-primary me-2"></i>Devoirs & QCM de ma filière ({{ devoirs|length }})
                 </h5>
+                <a href="{% url 'creer_devoir' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i>Nouveau Devoir
+                </a>
             </div>
             <div class="table-responsive">
                 <table class="table table-dark table-hover align-middle mb-0">
@@ -178,6 +190,7 @@
                             <th>Questions</th>
                             <th>Statut</th>
                             <th>Date de création</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -190,9 +203,15 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge bg-secondary">
-                                    {{ d.total_questions }} question(s)
+                                {% if d.total_questions == 0 %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">
+                                    <i class="bi bi-exclamation-circle me-1"></i>0 question
                                 </span>
+                                {% else %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                                    <i class="bi bi-check-circle me-1"></i>{{ d.total_questions }} question(s)
+                                </span>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if d.est_actif %}
@@ -202,10 +221,38 @@
                                 {% endif %}
                             </td>
                             <td class="text-white-50 small">{{ d.date_creation|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Gérer les questions -->
+                                    <a href="{% url 'gerer_devoir' d.pk %}" class="btn btn-outline-success" title="Gérer les questions">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </a>
+                                    <!-- Voir les soumissions -->
+                                    <a href="{% url 'liste_soumission_devoir' d.pk %}" class="btn btn-outline-primary" title="Voir les soumissions des élèves">
+                                        <i class="bi bi-people-fill"></i>
+                                    </a>
+                                    <!-- Télécharger le PDF de correction -->
+                                    <a href="{% url 'telecharger_devoir_pdf' d.pk %}" class="btn btn-outline-info" title="Télécharger corrigé PDF">
+                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                    </a>
+                                    <!-- Dupliquer -->
+                                    <a href="{% url 'dupliquer_devoir' d.pk %}" class="btn btn-outline-warning" title="Dupliquer pour une autre session">
+                                        <i class="bi bi-copy"></i>
+                                    </a>
+                                    <!-- Modifier -->
+                                    <a href="{% url 'modifier_devoir' d.pk %}" class="btn btn-outline-light" title="Modifier le devoir">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <!-- Supprimer -->
+                                    <a href="{% url 'supprimer_devoir' d.pk %}" class="btn btn-outline-danger" onclick="return confirm('Supprimer ce devoir et toutes ses questions ?');" title="Supprimer">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-white-50">
+                            <td colspan="6" class="text-center py-4 text-white-50">
                                 Aucun devoir créé pour cette formation.
                             </td>
                         </tr>

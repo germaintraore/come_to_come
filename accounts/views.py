@@ -110,14 +110,19 @@ def deconnexion(request):
 # INTERFACE ADMIN PERSONNALISEE
 # ============================================================
 
+from django.db.models import Q
+
+
 def admin_required(view_func):
     """Decorateur : reserve aux staff/superusers."""
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.error(request, "Connectez-vous d'abord.")
             return redirect('connexion')
-        if not request.user.is_staff:
-            messages.error(request, "Acces reserve aux administrateurs.")
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, "Accès réservé aux administrateurs.")
+            if request.user.is_formateur:
+                return redirect('dashboard_formateur')
             return redirect('tableau_de_bord')
         return view_func(request, *args, **kwargs)
     wrapper.__name__ = view_func.__name__
@@ -128,7 +133,7 @@ def admin_required(view_func):
 def admin_dashboard(request):
     """Tableau de bord administrateur avec statistiques et filtres."""
     apprenants = Apprenant.objects.filter(is_staff=False, is_formateur=False)
-    devoirs=Devoir.objects.all().order_by('-date_creation')
+    devoirs = Devoir.objects.all().order_by('-date_creation')
 
     # Filtre par formation
     formation = request.GET.get('formation', '').strip()
@@ -140,17 +145,14 @@ def admin_dashboard(request):
     if session:
         apprenants = apprenants.filter(session=session)
 
-    # Recherche textuelle
+    # Recherche textuelle (sans réinitialiser les filtres précédents)
     search = request.GET.get('q', '').strip()
     if search:
         apprenants = apprenants.filter(
-            nom__icontains=search
-        ) | Apprenant.objects.filter(
-            prenom__icontains=search, is_staff=False, is_formateur=False
-        ) | Apprenant.objects.filter(
-            whatsapp__icontains=search, is_staff=False, is_formateur=False
+            Q(nom__icontains=search) |
+            Q(prenom__icontains=search) |
+            Q(whatsapp__icontains=search)
         )
-        apprenants = apprenants.distinct()
 
     apprenants = apprenants.order_by('-date_inscription')
     total = apprenants.count()
@@ -500,12 +502,9 @@ def export_pdf(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
-@login_required
+@admin_required
 def diffusion_whatsapp(request):
     """Générateur de messages WhatsApp ciblés par session avec support de pièce jointe."""
-    if not request.user.is_staff:
-        messages.error(request, "Accès réfusé.")
-        return redirect('tableau_de_bord')
     destinataires = []
     fichier_url = None
     fichier_nom = None
@@ -718,8 +717,19 @@ def dashboard_formateur(request):
     if session:
         apprenants = apprenants.filter(session=session)
 
+    # Recherche textuelle optionnelle
+    search = request.GET.get('q', '').strip()
+    if search:
+        apprenants = apprenants.filter(
+            Q(nom__icontains=search) |
+            Q(prenom__icontains=search) |
+            Q(whatsapp__icontains=search)
+        )
+
     # Récupérer les devoirs de SA formation
     devoirs = Devoir.objects.filter(formation=formation.code).order_by('-date_creation')
+    if session:
+        devoirs = devoirs.filter(session=session)
 
     context = {
         'formateur': formateur,
@@ -730,6 +740,7 @@ def dashboard_formateur(request):
         'actifs': apprenants.filter(is_active=True).count(),
         'session_choices': Apprenant.SESSION_MOIS_CHOICES,
         'session_selectionnee': session,
+        'search': search,
     }
     return render(request, 'accounts/dashboard_formateur.html', context)
 

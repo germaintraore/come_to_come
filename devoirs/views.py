@@ -1,32 +1,21 @@
 
 
-from devoirs.forms import DupliquerDevoirForm
-from accounts.models import Apprenant
-from django.http import HttpResponse
-#from reportlab.platypus import doctemplate
-
-from asyncio import queues
-
-from reportlab.lib.colors import green
-from django.db.models import aggregates
-from asyncio import taskgroups
-from openpyxl.utils import bound_dictionary
-from reportlab.platypus import HRFlowable
 import io 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors 
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,HRFlowable
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
-from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
-from reportlab.lib.enums import TA_CENTER,TA_LEFT,TA_RIGHT
-
-from django.shortcuts import render,redirect,get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-
-from .models import Devoir ,Question,Soumission,ReponseApprenant
-from .forms import DevoirForm,QuestionForm  ,DupliquerDevoirForm
+from accounts.models import Apprenant, Formation
+from .models import Devoir, Question, Soumission, ReponseApprenant
+from .forms import DevoirForm, QuestionForm, DupliquerDevoirForm
 
 
 def _est_formateur_ou_staff(user):
@@ -34,93 +23,102 @@ def _est_formateur_ou_staff(user):
     return user.is_staff or user.is_superuser or user.is_formateur
 
 
+def _verifier_acces_devoir_formateur(user, devoir):
+    """Vérifie si le formateur a le droit d'accéder/modifier ce devoir."""
+    if user.is_staff or user.is_superuser:
+        return True
+    if user.is_formateur:
+        return bool(user.formation_assignee and devoir.formation == user.formation_assignee.code)
+    return False
+
+
 @login_required
 def liste_devoirs(request):
-    devoir=Devoir.objects.filter(est_actif=True,formation=request.user.formation,session=request.user.session).order_by('-date_creation')
+    devoir = Devoir.objects.filter(
+        est_actif=True,
+        formation=request.user.formation,
+        session=request.user.session
+    ).order_by('-date_creation')
    
-
-    devoir_utilisateur=[]
+    devoir_utilisateur = []
     for d in devoir:
-        soumission=Soumission.objects.filter(devoir=d,apprenant=request.user).first()
-
+        soumission = Soumission.objects.filter(devoir=d, apprenant=request.user).first()
         devoir_utilisateur.append({
-            "devoir":d,
-            "soumission":soumission,
+            "devoir": d,
+            "soumission": soumission,
             "meilleur_note": soumission.note if soumission else None,
         })
 
-    return render(request,'devoirs/liste_devoirs.html',{
-        'devoir_utilisateur':devoir_utilisateur,
+    return render(request, 'devoirs/liste_devoirs.html', {
+        'devoir_utilisateur': devoir_utilisateur,
     })
 
+
 @login_required
-def passer_devoir(request,pk):
+def passer_devoir(request, pk):
+    formation = request.user.formation
+    session = request.user.session
+    devoir = get_object_or_404(Devoir, pk=pk, est_actif=True, formation=formation, session=session)
 
-    if not request.user.is_authenticated:
-        return redirect('connexion')
-
-    formation=request.user.formation
-    session=request.user.session
-    devoir=get_object_or_404(Devoir,pk=pk,est_actif=True,formation=formation,session=session)
-
-    if not devoir:
-        messages.error(request,"Vous n'avez pas accès à ce devoir")
-        return redirect('liste_devoirs')
-
-    if Soumission.objects.filter(apprenant=request.user,devoir=devoir).exists():
-        return redirect('resultat_devoir',pk=pk)
+    if Soumission.objects.filter(apprenant=request.user, devoir=devoir).exists():
+        return redirect('resultat_devoir', pk=pk)
         
-    return render(request,'devoirs/passer_devoir.html',{
-        'devoir':devoir,
-        'questions':Question.objects.filter(devoir=devoir),   
+    return render(request, 'devoirs/passer_devoir.html', {
+        'devoir': devoir,
+        'questions': Question.objects.filter(devoir=devoir).order_by('ordre'),   
     })
 
-@login_required
-def soumettre_devoir(request,pk):
-    devoir=get_object_or_404(Devoir,pk=pk,est_actif=True)
-    if request.method != 'POST':
-        return redirect('passer_devoir',pk=pk)
-    if Soumission.objects.filter(apprenant=request.user,devoir=devoir).exists():
-        return redirect('resultat_devoir',pk=pk)
 
-    questions=Question.objects.filter(devoir=devoir)
-    note=0
-    reponses_a_creer=[]
+@login_required
+def soumettre_devoir(request, pk):
+    devoir = get_object_or_404(Devoir, pk=pk, est_actif=True)
+    if request.method != 'POST':
+        return redirect('passer_devoir', pk=pk)
+        
+    if Soumission.objects.filter(apprenant=request.user, devoir=devoir).exists():
+        return redirect('resultat_devoir', pk=pk)
+
+    questions = Question.objects.filter(devoir=devoir).order_by('ordre')
+    note = 0
+    reponses_a_creer = []
     
     for q in questions:
-        reponse_utilisateur=request.POST.get(f'question_{q.id}')
-        correcte=reponse_utilisateur==q.bonne_reponse
+        reponse_utilisateur = request.POST.get(f'question_{q.id}', '').strip()
+        correcte = (reponse_utilisateur == q.bonne_reponse) if reponse_utilisateur else False
 
         if correcte:
-            note+=1
+            note += 1
+        
+        reponses_a_creer.append({
+            'question': q,
+            'reponse_choisie': reponse_utilisateur or '',
+            'est_correcte': correcte
+        })
 
-    soumission=Soumission.objects.create(
+    soumission = Soumission.objects.create(
         apprenant=request.user,
         devoir=devoir,
         note=note,
     )  
-    for q in questions:
-        reponse_utilisateur=request.POST.get(f'question_{q.id}')
-        correcte=reponse_utilisateur==q.bonne_reponse
 
+    for rep in reponses_a_creer:
         ReponseApprenant.objects.create(
             soumission=soumission,
-            question=q,
-            reponse_choisie=reponse_utilisateur,
-            est_correcte=correcte,
+            question=rep['question'],
+            reponse_choisie=rep['reponse_choisie'],
+            est_correcte=rep['est_correcte'],
         )   
-    
 
-    return redirect('resultat_devoir',pk=pk)
+    return redirect('resultat_devoir', pk=pk)
 
 
 @login_required 
-def resultat_devoir(request,pk):
-    devoir=get_object_or_404(Devoir,pk=pk)
-    soumission=Soumission.objects.filter(apprenant=request.user,devoir=devoir).first()
-    if not request.user.is_staff and not soumission:
-        messages.error(request,"Accès refusé")
-        return redirect('listes_devoirs')
+def resultat_devoir(request, pk):
+    devoir = get_object_or_404(Devoir, pk=pk)
+    soumission = Soumission.objects.filter(apprenant=request.user, devoir=devoir).first()
+    if not (request.user.is_staff or request.user.is_superuser or request.user.is_formateur) and not soumission:
+        messages.error(request, "Accès refusé.")
+        return redirect('liste_devoirs')
     
     if soumission:
         reponses_utilisateur = ReponseApprenant.objects.filter(soumission=soumission)
@@ -134,31 +132,46 @@ def resultat_devoir(request,pk):
         'questions': questions,
     })
 
+
 @login_required
 def creer_devoir(request):
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request,"Accès réservé aux administrateurs et formateurs")
+        messages.error(request, "Accès réservé aux administrateurs et formateurs.")
         return redirect('tableau_de_bord')
     
-    if request.method=='POST':
-        form=DevoirForm(request.POST)
-        if form.is_valid():
-           devoir= form.save()
-           messages.success(request,f" Le devoir {devoir.titre} pour la session  {devoir.get_session_display() } à été crée avec succès aller ajouter les questions")
-           return redirect('gerer_devoir',pk=devoir.pk)
-    else:
-        form=DevoirForm()
+    # Pour un formateur, pré-remplir sa formation assignée
+    initial_data = {}
+    if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
+        initial_data['formation'] = request.user.formation_assignee.code
 
-    return render(request,'devoirs/creer_devoir.html',{'form':form})
+    if request.method == 'POST':
+        form = DevoirForm(request.POST)
+        if form.is_valid():
+            devoir = form.save(commit=False)
+            if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
+                devoir.formation = request.user.formation_assignee.code
+            devoir.save()
+            messages.success(request, f"Le devoir '{devoir.titre}' a été créé avec succès. Vous pouvez maintenant ajouter les questions !")
+            return redirect('gerer_devoir', pk=devoir.pk)
+    else:
+        form = DevoirForm(initial=initial_data)
+
+    return render(request, 'devoirs/creer_devoir.html', {'form': form})
+
 
 @login_required
 def gerer_devoir(request, pk):
     """Page d'administration d'un devoir : voir les questions et en ajouter d'autres"""
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request, "Accès réservé refusé")
+        messages.error(request, "Accès réservé refusé.")
         return redirect('tableau_de_bord')
 
     devoir = get_object_or_404(Devoir, pk=pk)
+
+    if not _verifier_acces_devoir_formateur(request.user, devoir):
+        messages.error(request, "Vous n'avez pas accès à ce devoir.")
+        return redirect('dashboard_formateur')
+
     questions = devoir.questions.all().order_by('ordre')
 
     if request.method == 'POST':
@@ -183,28 +196,43 @@ def gerer_devoir(request, pk):
 
 
 @login_required
-def supprimer_question(request,pk):
-    """ Supprimer une question précise d'un devoir"""
+def supprimer_question(request, pk):
+    """Supprimer une question précise d'un devoir"""
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request,"Action réfusé")
+        messages.error(request, "Action refusée.")
         return redirect('tableau_de_bord')
-    question=get_object_or_404(Question,pk=pk)
-    devoir_pk=question.devoir.pk
+    question = get_object_or_404(Question, pk=pk)
+    devoir = question.devoir
+
+    if not _verifier_acces_devoir_formateur(request.user, devoir):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('dashboard_formateur')
+
+    devoir_pk = devoir.pk
     question.delete()
-    messages.success(request,"Question supprimée avec succès")
-    return redirect('gerer_devoir',pk=devoir_pk)
+    messages.success(request, "Question supprimée avec succès.")
+    return redirect('gerer_devoir', pk=devoir_pk)
+
 
 @login_required
-def supprimer_devoir(request,pk):
-    """ Supprimer un devoir précis et toutes ces questions associées"""
+def supprimer_devoir(request, pk):
+    """Supprimer un devoir précis et toutes ses questions associées"""
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request,"Action réfusé")
+        messages.error(request, "Action refusée.")
         return redirect('tableau_de_bord')
-    devoir=get_object_or_404(Devoir,pk=pk)
-    titre=devoir.titre
+    devoir = get_object_or_404(Devoir, pk=pk)
+
+    if not _verifier_acces_devoir_formateur(request.user, devoir):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('dashboard_formateur')
+
+    titre = devoir.titre
     devoir.delete()
-    messages.success(request,f" Devoir {titre} supprimée avec succès")
-    return redirect('admin_dashboard')
+    messages.success(request, f"Devoir '{titre}' supprimé avec succès.")
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('admin_dashboard')
+    return redirect('dashboard_formateur')
+
 
 @login_required
 def modifier_question(request, pk):
@@ -216,15 +244,17 @@ def modifier_question(request, pk):
     question = get_object_or_404(Question, pk=pk)
     devoir = question.devoir
 
+    if not _verifier_acces_devoir_formateur(request.user, devoir):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('dashboard_formateur')
+
     if request.method == 'POST':
-        # On passe 'instance=question' pour que Django sache qu'on MODIFIE cette question
         form = QuestionForm(request.POST, instance=question)
         if form.is_valid():
             form.save()
             messages.success(request, f"Question #{question.ordre} modifiée avec succès !")
             return redirect('gerer_devoir', pk=devoir.pk)
     else:
-        # En mode GET : charger le formulaire pré-rempli avec les données actuelles
         form = QuestionForm(instance=question)
 
     return render(request, 'devoirs/modifier_question.html', {
@@ -247,8 +277,16 @@ def telecharger_devoir_pdf(request, pk):
             messages.error(request, "Vous devez d'abord traiter et soumettre le devoir avant de pouvoir télécharger le corrigé.")
             return redirect('liste_devoirs')
     else:
-        # Pour le staff, on peut récupérer sa soumission s'il en a une
+        # Pour le staff ou le formateur, on peut récupérer sa soumission s'il en a une
         soumission = Soumission.objects.filter(apprenant=request.user, devoir=devoir).first()
+
+    # Récupérer le nom du vrai formateur de cette filière
+    formateur_obj = Apprenant.objects.filter(
+        is_formateur=True,
+        formation_assignee__code=devoir.formation
+    ).first()
+    nom_formateur = formateur_obj.nom_complet if formateur_obj else "Équipe 2S Informatique Plus"
+    tel_formateur = formateur_obj.whatsapp if formateur_obj else "+226 70 00 00 00"
 
     # Création du buffer pour le fichier PDF
     buffer = io.BytesIO()
@@ -322,11 +360,10 @@ def telecharger_devoir_pdf(request, pk):
             Paragraph(f"<b>Session :</b> {devoir.get_session_display()}", body_style),
         ],
         [
-            Paragraph(f"<b>Formateur :</b> {request.user.nom_complet}", body_style),
-            Paragraph(f"<b>Tél :</b> {request.user.whatsapp}", body_style),
+            Paragraph(f"<b>Formateur :</b> {nom_formateur}", body_style),
+            Paragraph(f"<b>Contact :</b> {tel_formateur}", body_style),
         ]
     ]
-
 
     if soumission:
         reponses_dict = {rep.question_id: rep for rep in soumission.reponses.all()}
@@ -337,7 +374,7 @@ def telecharger_devoir_pdf(request, pk):
     else:
         reponses_dict = {}
         info_data.append([
-            Paragraph("<b>Mode :</b> Corrigé officiel (Staff)", body_style),
+            Paragraph("<b>Mode :</b> Corrigé officiel (Staff / Formateur)", body_style),
             Paragraph(f"<b>Total questions :</b> {devoir.total_questions()}", body_style),
         ])
 
@@ -408,39 +445,50 @@ def telecharger_devoir_pdf(request, pk):
 
 
 @login_required
-def dupliquer_devoir(request,pk):
+def dupliquer_devoir(request, pk):
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request,"Accès refusé")
+        messages.error(request, "Accès refusé.")
         return redirect('tableau_de_bord')
-    devoir_source=get_object_or_404(Devoir,pk=pk)
-    if request.method=="POST":
-        form=DupliquerDevoirForm(request.POST)
+    devoir_source = get_object_or_404(Devoir, pk=pk)
+
+    if not _verifier_acces_devoir_formateur(request.user, devoir_source):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('dashboard_formateur')
+
+    if request.method == "POST":
+        form = DupliquerDevoirForm(request.POST)
         if form.is_valid():
-            nouveau_devoir=form.save(commit=False)
-            nouveau_devoir.description=devoir_source.description
-            nouveau_devoir.est_actif=True
+            nouveau_devoir = form.save(commit=False)
+            if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
+                nouveau_devoir.formation = request.user.formation_assignee.code
+            nouveau_devoir.description = devoir_source.description
+            nouveau_devoir.est_actif = True
             nouveau_devoir.save()
-        
-        
-        questions=devoir_source.questions.all()
-        for q in questions:
-            Question.objects.create(
-                devoir=nouveau_devoir,
-                texte=q.texte,
-                choix_a=q.choix_a,
-                choix_b=q.choix_b,
-                choix_c=q.choix_c,
-                choix_d=q.choix_d,
-                bonne_reponse=q.bonne_reponse,
-                justification=q.justification,
-                ordre=q.ordre,
-            )
-        messages.success(request,f"Devoir dupliqué avec succès pour la session '{nouveau_devoir.get_session_display()}' avec {questions.count()} questions (s) !!" )
-        return redirect('admin_dashboard')
+            
+            questions = devoir_source.questions.all()
+            for q in questions:
+                Question.objects.create(
+                    devoir=nouveau_devoir,
+                    texte=q.texte,
+                    choix_a=q.choix_a,
+                    choix_b=q.choix_b,
+                    choix_c=q.choix_c,
+                    choix_d=q.choix_d,
+                    bonne_reponse=q.bonne_reponse,
+                    justification=q.justification,
+                    ordre=q.ordre,
+                )
+            messages.success(request, f"Devoir dupliqué avec succès pour la session '{nouveau_devoir.get_session_display()}' avec {questions.count()} question(s) !")
+            if request.user.is_staff or request.user.is_superuser:
+                return redirect('admin_dashboard')
+            return redirect('dashboard_formateur')
     else:
-        form=DupliquerDevoirForm(instance=devoir_source)
-        return render(request,'devoirs/dupliquer_devoir.html',{'devoir':devoir_source ,
-        'form':form})
+        form = DupliquerDevoirForm(instance=devoir_source)
+        return render(request, 'devoirs/dupliquer_devoir.html', {
+            'devoir': devoir_source,
+            'form': form
+        })
+
 
 @login_required
 def modifier_devoir(request, pk):
@@ -451,15 +499,22 @@ def modifier_devoir(request, pk):
 
     devoir = get_object_or_404(Devoir, pk=pk)
 
+    if not _verifier_acces_devoir_formateur(request.user, devoir):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('dashboard_formateur')
+
     if request.method == 'POST':
-        # On passe instance=devoir pour mettre à jour l'enregistrement existant
         form = DevoirForm(request.POST, instance=devoir)
         if form.is_valid():
-            devoir_modifie = form.save()
+            devoir_modifie = form.save(commit=False)
+            if request.user.is_formateur and not request.user.is_staff and request.user.formation_assignee:
+                devoir_modifie.formation = request.user.formation_assignee.code
+            devoir_modifie.save()
             messages.success(request, f"Le devoir « {devoir_modifie.titre} » a été mis à jour avec succès !")
-            return redirect('admin_dashboard')
+            if request.user.is_staff or request.user.is_superuser:
+                return redirect('admin_dashboard')
+            return redirect('dashboard_formateur')
     else:
-        # En mode GET : charge le formulaire pré-rempli avec les données actuelles du devoir
         form = DevoirForm(instance=devoir)
 
     return render(request, 'devoirs/modifier_devoir.html', {
@@ -467,26 +522,23 @@ def modifier_devoir(request, pk):
         'devoir': devoir,
     })
 
+
 @login_required
 def liste_soumission_devoir(request, pk):
-    """Afficher la liste des apprénants ayant composé pour un devoir donné"""
+    """Afficher la liste des apprenants ayant composé pour un devoir donné"""
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request, "Accès réfusé")
+        messages.error(request, "Accès refusé.")
         return redirect('tableau_de_bord')
     
     devoir = get_object_or_404(Devoir, pk=pk)
     
-    # Si c'est un formateur (pas staff), il ne peut voir que les devoirs de sa formation
-    if request.user.is_formateur and not request.user.is_staff:
-        formation_assignee = request.user.formation_assignee
-        if not formation_assignee or devoir.formation != formation_assignee.code:
-            messages.error(request, "Vous n'avez pas accès à ce devoir.")
-            return redirect('dashboard_formateur')
+    if not _verifier_acces_devoir_formateur(request.user, devoir):
+        messages.error(request, "Vous n'avez pas accès à ce devoir.")
+        return redirect('dashboard_formateur')
     
-    # recupère toutes les soummissions pour ce devoir avec les infos des apprenants
-    soumissions=devoir.soumissions.select_related('apprenant').order_by('-date_soumission')
-    total_soumissions=soumissions.count()
-    moyenne=None
+    soumissions = devoir.soumissions.select_related('apprenant').order_by('-date_soumission')
+    total_soumissions = soumissions.count()
+    moyenne = None
     if total_soumissions > 0:
         moyenne = round(sum(s.note for s in soumissions) / total_soumissions, 2)
     
@@ -501,27 +553,24 @@ def liste_soumission_devoir(request, pk):
         }
     )
 
-@login_required
-def detail_soumission_admin(request,pk):
-    """Affiche les détails et les réponses complètes d'un élève pour une soumission donnée"""
 
+@login_required
+def detail_soumission_admin(request, pk):
+    """Affiche les détails et les réponses complètes d'un élève pour une soumission donnée"""
     if not _est_formateur_ou_staff(request.user):
-        messages.error(request, "Accès réfusé.")
+        messages.error(request, "Accès refusé.")
         return redirect('tableau_de_bord')
 
     soumission = get_object_or_404(Soumission, pk=pk)
 
-    # Formateur : vérifier que l'apprenant appartient bien à sa formation
-    if request.user.is_formateur and not request.user.is_staff:
-        formation_assignee = request.user.formation_assignee
-        if not formation_assignee or soumission.devoir.formation != formation_assignee.code:
-            messages.error(request, "Vous n'avez pas accès à cette soumission.")
-            return redirect('dashboard_formateur')
+    if not _verifier_acces_devoir_formateur(request.user, soumission.devoir):
+        messages.error(request, "Vous n'avez pas accès à cette soumission.")
+        return redirect('dashboard_formateur')
+
     devoir = soumission.devoir
     apprenant = soumission.apprenant
     reponses = soumission.reponses.select_related('question').order_by('question_id')
     total_questions = devoir.total_questions()
-
     
     context = {
         'soumission': soumission,

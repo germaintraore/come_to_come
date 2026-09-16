@@ -30,9 +30,15 @@
 
             </div>
             <div>
+                {% if request.user.is_staff or request.user.is_superuser %}
                 <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">
                     <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
                 </a>
+                {% else %}
+                <a href="{% url 'dashboard_formateur' %}" class="btn btn-secondary-ctc">
+                    <i class="bi bi-arrow-left me-1"></i>Retour à mon espace
+                </a>
+                {% endif %}
             </div>
         </div>
 

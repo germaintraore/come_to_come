@@ -116,7 +116,7 @@ class Apprenant(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True, verbose_name="Compte actif")
     is_staff = models.BooleanField(default=False, verbose_name="Membre du staff")
     
-    is_formateur = models.BooleanField(default=False, verbose_name="Membreee= des formateurs")
+    is_formateur = models.BooleanField(default=False, verbose_name="Membre formateur")
     formation_assignee=models.ForeignKey(Formation,
     on_delete=models.SET_NULL,
     null=True,

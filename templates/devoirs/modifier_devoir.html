@@ -18,9 +18,15 @@
                         <h2 class="text-white mb-0">Modifier le Devoir</h2>
                         <small class="text-white-50">Modifiez le titre, les consignes ou les options associées.</small>
                     </div>
+                    {% if request.user.is_staff or request.user.is_superuser %}
                     <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">
                         <i class="bi bi-arrow-left me-1"></i>Retour
                     </a>
+                    {% else %}
+                    <a href="{% url 'dashboard_formateur' %}" class="btn btn-secondary-ctc">
+                        <i class="bi bi-arrow-left me-1"></i>Retour
+                    </a>
+                    {% endif %}
                 </div>
 
                 <!-- Formulaire Card -->
@@ -78,7 +84,11 @@
 
                         <!-- Boutons d'action -->
                         <div class="d-flex justify-content-end gap-2">
+                            {% if request.user.is_staff or request.user.is_superuser %}
                             <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary-ctc">Annuler</a>
+                            {% else %}
+                            <a href="{% url 'dashboard_formateur' %}" class="btn btn-secondary-ctc">Annuler</a>
+                            {% endif %}
                             <button type="submit" class="btn btn-warning">
                                 <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
                             </button>

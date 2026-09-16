@@ -155,8 +155,8 @@ class DiffusionWhatsAppForm(forms.Form):
     )
     
     formation = forms.ChoiceField(
-        required=True,
-        label="Type de formation *",
+        required=False,
+        label="Type de formation (optionnel)",
         widget=forms.Select(attrs={'class': 'form-control form-control-lg'})
     )
     
@@ -179,9 +179,9 @@ class DiffusionWhatsAppForm(forms.Form):
         }),
         help_text="Formats acceptés : PDF, JPG, PNG (Max 10 Mo)."
     )
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        self.fields['formation'].choices=[('','Toutes les formations disponibles ')]+ Formation.get_choices(only_active=False)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['formation'].choices = [('', 'Toutes les formations')] + Formation.get_choices(only_active=False)
     
 class FormationForm(forms.ModelForm):
     """Formulaire pour créer ou modifier une formation."""
@@ -208,14 +208,14 @@ class FormationForm(forms.ModelForm):
         }
 
 
-# Dans accounts/forms.py
-
 class FormateurCreationForm(forms.ModelForm):
     """Formulaire utilisé par le Super Admin pour créer un compte formateur."""
     
     password = forms.CharField(
         label="Mot de passe initial",
-        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Mot de passe'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Mot de passe'}),
+        min_length=8,
+        help_text="Minimum 8 caractères."
     )
     formation_assignee = forms.ModelChoiceField(
         queryset=Formation.objects.filter(est_active=True),
@@ -232,6 +232,14 @@ class FormateurCreationForm(forms.ModelForm):
             'prenom': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Prénom'}),
             'whatsapp': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': '+22670000000'}),
         }
+
+    def clean_whatsapp(self):
+        whatsapp = self.cleaned_data.get('whatsapp')
+        if whatsapp:
+            whatsapp = whatsapp.strip()
+            if Apprenant.objects.filter(whatsapp=whatsapp).exists():
+                raise forms.ValidationError("Ce numéro WhatsApp est déjà enregistré pour un autre utilisateur.")
+        return whatsapp
 
     def save(self, commit=True):
         formateur = super().save(commit=False)
