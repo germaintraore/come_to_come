@@ -25,5 +25,8 @@ urlpatterns = [
     path('<int:pk>/soumission/',views.liste_soumission_devoir,name='liste_soumission_devoir'),
     path('soumission/<int:pk>/detail/',views.detail_soumission_admin,name='detail_soumission_admin'),
 
-
+    # ===== RESSOURCES PÉDAGOGIQUES =====
+    path('ressources/ajouter/', views.ajouter_ressource, name='ajouter_ressource'),
+    path('ressources/<int:pk>/telecharger/', views.telecharger_ressource, name='telecharger_ressource'),
+    path('ressources/<int:pk>/supprimer/', views.supprimer_ressource, name='supprimer_ressource'),
 ]

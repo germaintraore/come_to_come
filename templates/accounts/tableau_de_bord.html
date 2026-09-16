@@ -170,6 +170,55 @@
             </div>
         </div>
 
+        <!-- ======================================================================= -->
+        <!-- 4. RESSOURCES PÉDAGOGIQUES DISPONIBLES                                  -->
+        <!-- ======================================================================= -->
+        {% if ressources %}
+        <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden mt-5">
+            <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                <i class="bi bi-folder2-open text-warning fs-5"></i>
+                <h5 class="text-white mb-0">
+                    Ressources de cours disponibles
+                    <span class="badge bg-warning text-dark ms-2">{{ ressources|length }}</span>
+                </h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for r in ressources %}
+                <div class="list-group-item bg-dark border-secondary border-opacity-25 d-flex justify-content-between align-items-center py-3 px-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Icône selon le type -->
+                        <div class="flex-shrink-0 mt-1">
+                            {% if r.type_fichier == 'pdf' %}
+                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+                            {% else %}
+                            <i class="bi bi-camera-video-fill text-primary fs-4"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white mb-1">{{ r.titre }}</div>
+                            {% if r.description %}
+                            <p class="text-white-50 small mb-1">{{ r.description }}</p>
+                            {% endif %}
+                            <span class="text-white-50 small">
+                                <i class="bi bi-hdd me-1"></i>{{ r.taille_lisible }}
+                                &nbsp;·&nbsp;
+                                <i class="bi bi-calendar3 me-1"></i>{{ r.date_ajout|date:"d/m/Y" }}
+                                &nbsp;·&nbsp;
+                                <span class="badge bg-info bg-opacity-25 text-info">{{ r.get_session_display }}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{% url 'telecharger_ressource' r.pk %}"
+                       class="btn btn-sm btn-outline-warning flex-shrink-0 ms-3"
+                       title="Télécharger cette ressource">
+                        <i class="bi bi-download me-1"></i>Télécharger
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}

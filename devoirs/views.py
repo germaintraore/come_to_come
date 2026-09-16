@@ -14,8 +14,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 from accounts.models import Apprenant, Formation
-from .models import Devoir, Question, Soumission, ReponseApprenant
-from .forms import DevoirForm, QuestionForm, DupliquerDevoirForm
+from .models import Devoir, Question, Soumission, ReponseApprenant, RessourcePedagogique
+from .forms import DevoirForm, QuestionForm, DupliquerDevoirForm, RessourceForm
 
 
 def _est_formateur_ou_staff(user):
@@ -583,4 +583,151 @@ def detail_soumission_admin(request, pk):
     
     return render(request, 'devoirs/detail_soumission_admin.html', context)
 
-      
+
+# ============================================================
+# RESSOURCES PÉDAGOGIQUES
+# ============================================================
+
+def formateur_required(view_func):
+    """
+    Décorateur : accès réservé aux utilisateurs avec is_formateur=True.
+    Équivalent à @login_required + vérification du rôle formateur.
+    """
+    from functools import wraps
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Vous devez être connecté.")
+            return redirect('connexion')
+        if not request.user.is_formateur:
+            messages.error(request, "Accès réservé aux formateurs.")
+            return redirect('connexion')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@login_required
+@formateur_required
+def ajouter_ressource(request):
+    """
+    Permet à un formateur d'uploader une ressource pédagogique (PDF ou vidéo).
+    - GET  : affiche le formulaire vide
+    - POST : valide le fichier (taille + extension), sauvegarde, redirige
+
+    Note : request.FILES est OBLIGATOIRE pour recevoir le fichier uploadé.
+    Le formulaire HTML doit avoir enctype='multipart/form-data'.
+    """
+    formateur = request.user
+
+    if request.method == 'POST':
+        form = RessourceForm(
+            request.POST,
+            request.FILES,   # Sans ceci, le fichier n'est jamais reçu
+            formateur=formateur
+        )
+        if form.is_valid():
+            ressource = form.save(commit=False)  # Construit l'objet sans sauvegarder
+            ressource.formateur = formateur       # Rattache le formateur connecté
+            ressource.save()                      # Sauvegarde en BDD + écrit le fichier
+            messages.success(
+                request,
+                f"✅ La ressource \"{ressource.titre}\" a été ajoutée avec succès."
+            )
+            return redirect('dashboard_formateur')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+    else:
+        form = RessourceForm(formateur=formateur)
+
+    return render(request, 'devoirs/ajouter_ressource.html', {
+        'form': form,
+        'formateur': formateur,
+    })
+
+
+@login_required
+def telecharger_ressource(request, pk):
+    """
+    Permet à un apprenant de télécharger une ressource pédagogique.
+    Contrôle d'accès : l'apprenant doit appartenir à la même formation ET session.
+    Les admins et formateurs ont accès sans restriction.
+
+    La réponse utilise Content-Disposition: attachment pour forcer le téléchargement.
+    """
+    import os as _os
+    ressource = get_object_or_404(RessourcePedagogique, pk=pk, est_visible=True)
+    apprenant = request.user
+
+    # Vérification des droits : admins et formateurs ont accès libre
+    if not (apprenant.is_staff or apprenant.is_superuser or apprenant.is_formateur):
+        if apprenant.formation != ressource.formation:
+            messages.error(request, "Cette ressource ne correspond pas à votre formation.")
+            return redirect('tableau_de_bord')
+        if apprenant.session != ressource.session:
+            messages.error(request, "Cette ressource ne correspond pas à votre session.")
+            return redirect('tableau_de_bord')
+
+    # Lecture du fichier et envoi au navigateur
+    try:
+        chemin_fichier = ressource.fichier.path  # Chemin absolu sur le disque
+        with open(chemin_fichier, 'rb') as f:
+            contenu = f.read()
+
+        # Correspondance extension → Content-Type HTTP
+        extension = ressource.extension()
+        content_types = {
+            'pdf': 'application/pdf',
+            'mp4': 'video/mp4',
+            'mov': 'video/quicktime',
+            'avi': 'video/x-msvideo',
+            'mkv': 'video/x-matroska',
+            'webm': 'video/webm',
+        }
+        content_type = content_types.get(extension, 'application/octet-stream')
+        nom_fichier = _os.path.basename(ressource.fichier.name)
+
+        response = HttpResponse(contenu, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{nom_fichier}"'
+        return response
+
+    except FileNotFoundError:
+        messages.error(request, "Le fichier de cette ressource est introuvable sur le serveur.")
+        return redirect('tableau_de_bord')
+
+
+@login_required
+@formateur_required
+def supprimer_ressource(request, pk):
+    """
+    Supprime une ressource pédagogique.
+    Seul le formateur propriétaire (ou un admin) peut supprimer.
+    On supprime aussi le fichier physique du disque pour ne pas laisser d'orphelins.
+    """
+    import os as _os
+    ressource = get_object_or_404(RessourcePedagogique, pk=pk)
+
+    # Vérification : seul le propriétaire ou un admin peut supprimer
+    if not (request.user.is_staff or request.user.is_superuser):
+        if ressource.formateur != request.user:
+            messages.error(request, "Vous ne pouvez supprimer que vos propres ressources.")
+            return redirect('dashboard_formateur')
+
+    if request.method == 'POST':
+        # Suppression physique du fichier sur le disque
+        if ressource.fichier:
+            try:
+                chemin = ressource.fichier.path
+                if _os.path.exists(chemin):
+                    _os.remove(chemin)  # Suppression du fichier réel
+            except Exception:
+                pass  # Si déjà absent, on continue
+
+        titre = ressource.titre
+        ressource.delete()  # Suppression de l'enregistrement en BDD
+        messages.success(request, f"Ressource \"{titre}\" supprimée avec succès.")
+        return redirect('dashboard_formateur')
+
+    # Page de confirmation (GET)
+    return render(request, 'devoirs/confirmer_suppression_ressource.html', {
+        'ressource': ressource
+    })

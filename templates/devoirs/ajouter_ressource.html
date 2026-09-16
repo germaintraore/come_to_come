@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajouter une Ressource Pédagogique – Come To Code{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5" style="max-width: 720px;">
+
+        <!-- En-tête -->
+        <div class="mb-4">
+            <a href="{% url 'dashboard_formateur' %}" class="btn btn-sm btn-outline-secondary mb-3">
+                <i class="bi bi-arrow-left me-1"></i>Retour à mon espace
+            </a>
+            <span class="badge bg-warning text-dark px-3 py-2 mb-2 d-inline-block">
+                <i class="bi bi-cloud-upload me-1"></i>Nouvelle Ressource
+            </span>
+            <h1 class="text-white fw-bold mt-2 mb-1" style="font-size:1.6rem;">
+                Ajouter une ressource pédagogique
+            </h1>
+            <p class="text-white-50 mb-0">
+                Déposez un PDF ou une vidéo de cours. Vos apprenants pourront la télécharger depuis leur espace.
+            </p>
+        </div>
+
+        <!-- Carte Formulaire -->
+        <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4">
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-dismissible fade show
+                        {% if message.tags == 'error' %}alert-danger
+                        {% elif message.tags == 'success' %}alert-success
+                        {% else %}alert-info{% endif %}" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!--
+                CRITIQUE : enctype="multipart/form-data" est OBLIGATOIRE.
+                Sans cet attribut, Django ne reçoit jamais le fichier dans request.FILES.
+            -->
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_titre" class="form-label text-white-50 small fw-semibold">
+                        Titre de la ressource <span class="text-danger">*</span>
+                    </label>
+                    {{ form.titre }}
+                    {% if form.titre.errors %}
+                    <div class="text-danger small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>{{ form.titre.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_description" class="form-label text-white-50 small fw-semibold">
+                        Description <span class="text-white-50">(optionnel)</span>
+                    </label>
+                    {{ form.description }}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="id_type_fichier" class="form-label text-white-50 small fw-semibold">
+                            Type de ressource <span class="text-danger">*</span>
+                        </label>
+                        {{ form.type_fichier }}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_session" class="form-label text-white-50 small fw-semibold">
+                            Session <span class="text-danger">*</span>
+                        </label>
+                        {{ form.session }}
+                        {% if form.session.errors %}
+                        <div class="text-danger small mt-1">{{ form.session.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white-50 small fw-semibold">
+                        Formation <span class="text-danger">*</span>
+                    </label>
+                    {{ form.formation }}
+                    {% if form.formation_hidden %}{{ form.formation_hidden }}{% endif %}
+                    {% if form.formation.errors %}
+                    <div class="text-danger small mt-1">{{ form.formation.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label for="id_fichier" class="form-label text-white-50 small fw-semibold">
+                        Fichier <span class="text-danger">*</span>
+                        <span class="text-warning ms-1">(max 50 Mo)</span>
+                    </label>
+                    {{ form.fichier }}
+                    {% if form.fichier.errors %}
+                    <div class="text-danger small mt-1">
+                        <i class="bi bi-exclamation-triangle me-1"></i>{{ form.fichier.errors.0 }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text text-white-50 small mt-2">
+                        <i class="bi bi-info-circle me-1 text-info"></i>
+                        Formats acceptés : <strong>PDF</strong>, MP4, MOV, AVI, MKV, WEBM
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-warning fw-semibold">
+                        <i class="bi bi-cloud-upload me-1"></i>Publier la ressource
+                    </button>
+                    <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary">
+                        Annuler
+                    </a>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

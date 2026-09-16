@@ -14,7 +14,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from .forms import InscriptionForm, ConnexionForm,DiffusionWhatsAppForm,FormationForm,FormateurCreationForm
 from .models import Apprenant,Formation
-from devoirs.models import Devoir
+from devoirs.models import Devoir, RessourcePedagogique
 
 
 from reportlab.lib.pagesizes import A4, landscape
@@ -95,7 +95,17 @@ def connexion(request):
 
 @login_required
 def tableau_de_bord(request):
-    return render(request, 'accounts/tableau_de_bord.html', {'apprenant': request.user})
+    apprenant = request.user
+    # Ressources pédagogiques accessibles à cet apprenant (même formation + même session)
+    ressources = RessourcePedagogique.objects.filter(
+        formation=apprenant.formation,
+        session=apprenant.session,
+        est_visible=True
+    ).order_by('-date_ajout')
+    return render(request, 'accounts/tableau_de_bord.html', {
+        'apprenant': apprenant,
+        'ressources': ressources,
+    })
 
 
 @login_required
@@ -731,11 +741,19 @@ def dashboard_formateur(request):
     if session:
         devoirs = devoirs.filter(session=session)
 
+    # Ressources pédagogiques de cette formation
+    ressources = RessourcePedagogique.objects.filter(
+        formation=formation.code
+    ).order_by('-date_ajout')
+    if session:
+        ressources = ressources.filter(session=session)
+
     context = {
         'formateur': formateur,
         'formation': formation,
         'apprenants': apprenants,
         'devoirs': devoirs,
+        'ressources': ressources,
         'total_apprenants': apprenants.count(),
         'actifs': apprenants.filter(is_active=True).count(),
         'session_choices': Apprenant.SESSION_MOIS_CHOICES,

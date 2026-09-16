@@ -149,3 +149,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/connexion/'
 LOGIN_REDIRECT_URL = '/tableau-de-bord/'
 LOGOUT_REDIRECT_URL = '/'
+
+# ============================================================
+# LIMITE D'UPLOAD (PDF et vidéos jusqu'à 50 Mo)
+# La valeur par défaut Django est 2.5 Mo — insuffisant pour des vidéos.
+# ============================================================
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800   # 50 Mo en octets
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800   # 50 Mo en octets

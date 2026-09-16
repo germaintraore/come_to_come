@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmer la suppression – Come To Code{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container py-5 d-flex justify-content-center">
+        <div class="rounded-4 bg-dark border border-danger border-opacity-50 p-5 text-center" style="max-width: 520px; width:100%;">
+
+            <i class="bi bi-exclamation-triangle-fill text-danger d-block mb-3" style="font-size:3rem;"></i>
+
+            <h4 class="text-white fw-bold mb-2">Confirmer la suppression</h4>
+            <p class="text-white-50 mb-1">
+                Vous allez supprimer définitivement la ressource :
+            </p>
+            <p class="fw-bold text-white mb-1">« {{ ressource.titre }} »</p>
+            <p class="text-white-50 small mb-1">
+                Formation : <strong class="text-info">{{ ressource.formation }}</strong> &nbsp;|&nbsp;
+                Session : <strong class="text-info">{{ ressource.get_session_display }}</strong>
+            </p>
+            <p class="text-white-50 small mb-3">Taille : {{ ressource.taille_lisible }}</p>
+
+            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger small py-2 px-3 mb-4">
+                <i class="bi bi-trash3 me-1"></i>
+                Cette action est <strong>irréversible</strong>. Le fichier sera supprimé du serveur.
+            </div>
+
+            <form method="post" class="d-flex justify-content-center gap-3 flex-wrap">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger fw-semibold">
+                    <i class="bi bi-trash3 me-1"></i>Supprimer définitivement
+                </button>
+                <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Annuler
+                </a>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

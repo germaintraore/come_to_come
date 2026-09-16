@@ -262,6 +262,85 @@
             </div>
         </div>
 
+        <!-- ======================================================================= -->
+        <!-- Section 3 : Ressources Pédagogiques                                     -->
+        <!-- ======================================================================= -->
+        <div class="admin-table-card rounded-3 bg-dark border border-secondary border-opacity-25 overflow-hidden mt-5">
+            <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                <h5 class="text-white mb-0">
+                    <i class="bi bi-folder2-open text-warning me-2"></i>
+                    Ressources Pédagogiques
+                    <span class="badge bg-warning text-dark ms-2">{{ ressources|length }}</span>
+                </h5>
+                {% if formation %}
+                <a href="{% url 'ajouter_ressource' %}" class="btn btn-warning btn-sm fw-semibold">
+                    <i class="bi bi-cloud-upload me-1"></i>Ajouter une ressource
+                </a>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead class="text-white-50 small">
+                        <tr>
+                            <th>Titre</th>
+                            <th>Type</th>
+                            <th>Session</th>
+                            <th>Taille</th>
+                            <th>Date d'ajout</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in ressources %}
+                        <tr>
+                            <td class="fw-bold text-white">{{ r.titre }}</td>
+                            <td>
+                                {% if r.type_fichier == 'pdf' %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                </span>
+                                {% else %}
+                                <span class="badge bg-primary bg-opacity-25 text-primary">
+                                    <i class="bi bi-camera-video me-1"></i>Vidéo
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-25 text-info">
+                                    {{ r.get_session_display }}
+                                </span>
+                            </td>
+                            <td class="text-white-50 small">{{ r.taille_lisible }}</td>
+                            <td class="text-white-50 small">{{ r.date_ajout|date:"d/m/Y à H:i" }}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'telecharger_ressource' r.pk %}"
+                                       class="btn btn-outline-success"
+                                       title="Télécharger / Prévisualiser">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    <a href="{% url 'supprimer_ressource' r.pk %}"
+                                       class="btn btn-outline-danger"
+                                       title="Supprimer">
+                                        <i class="bi bi-trash3"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-white-50">
+                                <i class="bi bi-folder-x fs-2 d-block mb-2 opacity-50"></i>
+                                Aucune ressource déposée pour le moment.<br>
+                                <small>Cliquez sur "Ajouter une ressource" pour commencer.</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
