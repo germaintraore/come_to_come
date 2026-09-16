@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="dashboard-wrapper">
-    <div class="container py-5" style="max-width: 720px;">
+    <div class="container py-5" style="max-width: 840px;">
 
         <!-- En-tête -->
         <div class="mb-4">
@@ -15,16 +15,16 @@
             <span class="badge bg-warning text-dark px-3 py-2 mb-2 d-inline-block">
                 <i class="bi bi-cloud-upload me-1"></i>Nouvelle Ressource
             </span>
-            <h1 class="text-white fw-bold mt-2 mb-1" style="font-size:1.6rem;">
+            <h1 class="text-white fw-bold mt-2 mb-1" style="font-size:1.7rem;">
                 Ajouter une ressource pédagogique
             </h1>
             <p class="text-white-50 mb-0">
-                Déposez un PDF ou une vidéo de cours. Vos apprenants pourront la télécharger depuis leur espace.
+                Sélectionnez votre support de cours, visualisez son aperçu direct, puis validez pour le rendre accessible aux apprenants.
             </p>
         </div>
 
         <!-- Carte Formulaire -->
-        <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4">
+        <div class="rounded-4 bg-dark border border-secondary border-opacity-25 p-4 shadow">
 
             {% if messages %}
             {% for message in messages %}
@@ -42,9 +42,88 @@
                 CRITIQUE : enctype="multipart/form-data" est OBLIGATOIRE.
                 Sans cet attribut, Django ne reçoit jamais le fichier dans request.FILES.
             -->
-            <form method="post" enctype="multipart/form-data" novalidate>
+            <form method="post" enctype="multipart/form-data" id="form-ajout-ressource" novalidate>
                 {% csrf_token %}
 
+                <!-- Zone 1 : Sélection et prévisualisation directe du fichier -->
+                <div class="mb-4 p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25">
+                    <label class="form-label text-white fw-semibold mb-2 d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="bi bi-file-earmark-arrow-up text-warning me-1"></i>
+                            Fichier à insérer <span class="text-danger">*</span>
+                        </span>
+                        <span class="badge bg-secondary bg-opacity-50 text-white-50 small">
+                            Max 50 Mo (PDF, MP4, MOV, WEBM...)
+                        </span>
+                    </label>
+
+                    <!-- Champ Input natif -->
+                    <div class="mb-2">
+                        {{ form.fichier }}
+                    </div>
+
+                    {% if form.fichier.errors %}
+                    <div class="text-danger small mt-1 mb-2">
+                        <i class="bi bi-exclamation-triangle me-1"></i>{{ form.fichier.errors.0 }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Alerte d'erreur JS dynamique (taille / format) -->
+                    <div id="file-error-alert" class="alert alert-danger py-2 px-3 small mt-2 d-none" role="alert">
+                        <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                        <span id="file-error-message"></span>
+                    </div>
+
+                    <!-- Zone de Prévisualisation dynamique (masquée au départ) -->
+                    <div id="preview-panel" class="mt-3 p-3 rounded-3 bg-black bg-opacity-50 border border-warning border-opacity-25 d-none">
+                        <!-- En-tête des détails du fichier -->
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 mb-2 border-bottom border-secondary border-opacity-25">
+                            <div class="d-flex align-items-center gap-2">
+                                <span id="preview-type-badge"></span>
+                                <span id="preview-file-name" class="text-white fw-bold small text-break"></span>
+                                <span id="preview-file-size" class="badge bg-secondary bg-opacity-50 text-white-50"></span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a id="preview-open-link" href="#" target="_blank" class="btn btn-outline-info btn-sm" title="Ouvrir dans un nouvel onglet">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Plein écran
+                                </a>
+                                <button type="button" id="btn-changer-fichier" class="btn btn-outline-secondary btn-sm" title="Changer de fichier">
+                                    <i class="bi bi-x-circle me-1"></i>Retirer
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. Visualiseur PDF -->
+                        <div id="pdf-preview-wrapper" class="d-none">
+                            <div class="text-white-50 small mb-2 d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-eye me-1 text-warning"></i>Aperçu interactif du document PDF :</span>
+                                <span class="small text-white-50">Vous pouvez feuilleter le document ci-dessous</span>
+                            </div>
+                            <div class="ratio ratio-16x9 rounded-3 overflow-hidden border border-secondary border-opacity-25" style="min-height: 480px;">
+                                <iframe id="pdf-preview-frame" src="" style="border:0;" allowfullscreen></iframe>
+                            </div>
+                        </div>
+
+                        <!-- 2. Lecteur Vidéo -->
+                        <div id="video-preview-wrapper" class="d-none">
+                            <div class="text-white-50 small mb-2 d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-play-circle me-1 text-primary"></i>Lecteur vidéo de prévisualisation :</span>
+                                <span class="small text-white-50">Cliquez sur lecture pour tester la vidéo</span>
+                            </div>
+                            <div class="rounded-3 overflow-hidden bg-black text-center border border-secondary border-opacity-25">
+                                <video id="video-preview-player" controls class="w-100" style="max-height: 420px; outline:none;"></video>
+                            </div>
+                        </div>
+
+                        <!-- 3. Message de confirmation visuelle -->
+                        <div class="mt-2 text-success small d-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Fichier prêt à être enregistré. Vérifiez les informations ci-dessous puis validez.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone 2 : Informations de la ressource -->
                 <div class="mb-3">
                     <label for="id_titre" class="form-label text-white-50 small fw-semibold">
                         Titre de la ressource <span class="text-danger">*</span>
@@ -70,6 +149,9 @@
                             Type de ressource <span class="text-danger">*</span>
                         </label>
                         {{ form.type_fichier }}
+                        <div class="form-text text-white-50 small">
+                            Détecté et ajusté automatiquement selon le fichier sélectionné.
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label for="id_session" class="form-label text-white-50 small fw-semibold">
@@ -82,7 +164,7 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-4">
                     <label for="id_formation" class="form-label text-white-50 small fw-semibold">
                         Formation <span class="text-danger">*</span>
                     </label>
@@ -100,28 +182,12 @@
                     {% endif %}
                 </div>
 
-                <div class="mb-4">
-                    <label for="id_fichier" class="form-label text-white-50 small fw-semibold">
-                        Fichier <span class="text-danger">*</span>
-                        <span class="text-warning ms-1">(max 50 Mo)</span>
-                    </label>
-                    {{ form.fichier }}
-                    {% if form.fichier.errors %}
-                    <div class="text-danger small mt-1">
-                        <i class="bi bi-exclamation-triangle me-1"></i>{{ form.fichier.errors.0 }}
-                    </div>
-                    {% endif %}
-                    <div class="form-text text-white-50 small mt-2">
-                        <i class="bi bi-info-circle me-1 text-info"></i>
-                        Formats acceptés : <strong>PDF</strong>, MP4, MOV, AVI, MKV, WEBM
-                    </div>
-                </div>
-
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="submit" class="btn btn-warning fw-semibold">
-                        <i class="bi bi-cloud-upload me-1"></i>Publier la ressource
+                <!-- Boutons d'action -->
+                <div class="d-flex gap-2 flex-wrap pt-2 border-top border-secondary border-opacity-25">
+                    <button type="submit" id="btn-submit-ressource" class="btn btn-warning fw-semibold px-4 py-2 shadow">
+                        <i class="bi bi-cloud-upload me-1"></i>Enregistrer et valider la ressource
                     </button>
-                    <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'dashboard_formateur' %}" class="btn btn-outline-secondary py-2">
                         Annuler
                     </a>
                 </div>
@@ -131,4 +197,159 @@
 
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('id_fichier');
+    const previewPanel = document.getElementById('preview-panel');
+    const previewFileName = document.getElementById('preview-file-name');
+    const previewFileSize = document.getElementById('preview-file-size');
+    const previewTypeBadge = document.getElementById('preview-type-badge');
+    const previewOpenLink = document.getElementById('preview-open-link');
+    const btnChangerFichier = document.getElementById('btn-changer-fichier');
+    
+    const pdfWrapper = document.getElementById('pdf-preview-wrapper');
+    const pdfFrame = document.getElementById('pdf-preview-frame');
+    const videoWrapper = document.getElementById('video-preview-wrapper');
+    const videoPlayer = document.getElementById('video-preview-player');
+    
+    const errorAlert = document.getElementById('file-error-alert');
+    const errorMessage = document.getElementById('file-error-message');
+    const submitBtn = document.getElementById('btn-submit-ressource');
+    const typeSelect = document.getElementById('id_type_fichier');
+    const titreInput = document.getElementById('id_titre');
+    const form = document.getElementById('form-ajout-ressource');
+
+    const MAX_SIZE_OCTETS = 50 * 1024 * 1024; // 50 Mo
+    const EXTENSIONS_VALIDES = ['pdf', 'mp4', 'mov', 'avi', 'mkv', 'webm'];
+    let currentObjectUrl = null;
+
+    function formatTaille(octets) {
+        if (!octets || octets === 0) return '0 Octet';
+        const k = 1024;
+        const tailles = ['Octets', 'Ko', 'Mo', 'Go'];
+        const i = Math.floor(Math.log(octets) / Math.log(k));
+        return parseFloat((octets / Math.pow(k, i)).toFixed(2)) + ' ' + tailles[i];
+    }
+
+    function reinitialiserApercu() {
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+        if (pdfFrame) pdfFrame.src = '';
+        if (videoPlayer) {
+            videoPlayer.pause();
+            videoPlayer.src = '';
+        }
+        pdfWrapper.classList.add('d-none');
+        videoWrapper.classList.add('d-none');
+        previewPanel.classList.add('d-none');
+        errorAlert.classList.add('d-none');
+        submitBtn.disabled = false;
+    }
+
+    function afficherApercu(file) {
+        if (!file) {
+            reinitialiserApercu();
+            return;
+        }
+
+        const fileName = file.name;
+        const fileSize = file.size;
+        const ext = fileName.split('.').pop().toLowerCase();
+
+        // 1. Vérification de l'extension
+        if (!EXTENSIONS_VALIDES.includes(ext)) {
+            reinitialiserApercu();
+            errorMessage.textContent = `Format de fichier non autorisé (.${ext}). Veuillez choisir un document PDF ou une vidéo (MP4, MOV, AVI, WEBM).`;
+            errorAlert.classList.remove('d-none');
+            submitBtn.disabled = true;
+            return;
+        }
+
+        // 2. Vérification de la taille max
+        if (fileSize > MAX_SIZE_OCTETS) {
+            reinitialiserApercu();
+            errorMessage.textContent = `Fichier trop volumineux (${formatTaille(fileSize)}). La taille maximale autorisée est de 50 Mo.`;
+            errorAlert.classList.remove('d-none');
+            submitBtn.disabled = true;
+            return;
+        }
+
+        // Fichier valide : masquer erreurs et activer le bouton
+        errorAlert.classList.add('d-none');
+        submitBtn.disabled = false;
+
+        // Préremplir le titre si vide
+        if (titreInput && (!titreInput.value || titreInput.value.trim() === '')) {
+            const nomSansExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+            titreInput.value = nomSansExt.replace(/[-_]/g, ' ');
+        }
+
+        // Création de l'URL Blob pour la prévisualisation directe
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+        }
+        currentObjectUrl = URL.createObjectURL(file);
+
+        // Mise à jour de l'en-tête de l'aperçu
+        previewFileName.textContent = fileName;
+        previewFileSize.textContent = formatTaille(fileSize);
+        previewOpenLink.href = currentObjectUrl;
+
+        if (ext === 'pdf') {
+            // C'est un PDF
+            previewTypeBadge.innerHTML = '<span class="badge bg-danger"><i class="bi bi-file-earmark-pdf me-1"></i>Document PDF</span>';
+            if (typeSelect) typeSelect.value = 'pdf';
+
+            videoWrapper.classList.add('d-none');
+            if (videoPlayer) {
+                videoPlayer.pause();
+                videoPlayer.src = '';
+            }
+
+            pdfFrame.src = currentObjectUrl;
+            pdfWrapper.classList.remove('d-none');
+
+        } else {
+            // C'est une vidéo
+            previewTypeBadge.innerHTML = '<span class="badge bg-primary"><i class="bi bi-camera-video me-1"></i>Vidéo</span>';
+            if (typeSelect) typeSelect.value = 'video';
+
+            pdfWrapper.classList.add('d-none');
+            if (pdfFrame) pdfFrame.src = '';
+
+            videoPlayer.src = currentObjectUrl;
+            videoWrapper.classList.remove('d-none');
+        }
+
+        previewPanel.classList.remove('d-none');
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files && e.target.files[0];
+            afficherApercu(file);
+        });
+    }
+
+    if (btnChangerFichier) {
+        btnChangerFichier.addEventListener('click', function() {
+            if (fileInput) fileInput.value = '';
+            reinitialiserApercu();
+        });
+    }
+
+    // Animation lors de la soumission du formulaire
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (fileInput && fileInput.files && fileInput.files.length > 0 && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Téléversement et enregistrement en cours...';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

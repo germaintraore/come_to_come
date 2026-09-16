@@ -82,9 +82,9 @@
                     </div>
                 </div>
 
-                <!-- Info fichier actuel -->
+                <!-- Info fichier actuel avec aperçu intégré -->
                 <div class="mb-3 p-3 bg-secondary bg-opacity-10 rounded-3 border border-secondary border-opacity-25">
-                    <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
                             {% if ressource.type_fichier == 'pdf' %}
                             <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
@@ -96,9 +96,32 @@
                                 <div class="text-white-50 small">Taille : {{ ressource.taille_lisible }}</div>
                             </div>
                         </div>
-                        <a href="{% url 'telecharger_ressource' ressource.pk %}" class="btn btn-sm btn-outline-info" target="_blank">
-                            <i class="bi bi-download me-1"></i>Télécharger
-                        </a>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-warning" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApercuActuel">
+                                <i class="bi bi-eye me-1"></i>Voir l'aperçu
+                            </button>
+                            <a href="{% url 'telecharger_ressource' ressource.pk %}" class="btn btn-sm btn-outline-info" target="_blank">
+                                <i class="bi bi-download me-1"></i>Télécharger
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Accordion d'aperçu intégré -->
+                    <div class="collapse mt-3" id="collapseApercuActuel">
+                        <div class="p-2 rounded-3 bg-black bg-opacity-50 border border-secondary border-opacity-25">
+                            {% if ressource.type_fichier == 'pdf' %}
+                            <div class="ratio ratio-16x9" style="min-height: 420px;">
+                                <iframe src="{% url 'telecharger_ressource' ressource.pk %}" style="border:0;" allowfullscreen></iframe>
+                            </div>
+                            {% else %}
+                            <div class="text-center">
+                                <video controls class="w-100 rounded-3" style="max-height: 380px;">
+                                    <source src="{% url 'telecharger_ressource' ressource.pk %}" type="video/mp4">
+                                    Votre navigateur ne supporte pas la balise vidéo.
+                                </video>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
