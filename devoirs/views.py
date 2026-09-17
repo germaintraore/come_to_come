@@ -1,10 +1,12 @@
 
 
+import os
 import io 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
+from django.core.files.base import ContentFile
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors 
@@ -800,7 +802,7 @@ def reaffecter_ressource(request, pk):
                 return redirect('dashboard_formateur')
             else:  # mode == 'dupliquer'
                 try:
-                    nom_fichier = _os.path.basename(ressource.fichier.name)
+                    nom_fichier = os.path.basename(ressource.fichier.name)
                     with ressource.fichier.open('rb') as f:
                         fichier_copie = ContentFile(f.read(), name=nom_fichier)
 
@@ -808,7 +810,6 @@ def reaffecter_ressource(request, pk):
                         titre=nouveau_titre,
                         description=ressource.description,
                         fichier=fichier_copie,
-                        taille_fichier=ressource.taille_fichier,
                         type_fichier=ressource.type_fichier,
                         formation=ressource.formation,
                         session=session_cible,
@@ -852,12 +853,7 @@ def modifier_ressource(request, pk):
     if request.method == 'POST':
         form = ModifierRessourceForm(request.POST, request.FILES, instance=ressource)
         if form.is_valid():
-            ressource_maj = form.save(commit=False)
-            # Si un nouveau fichier a été fourni
-            nouveau_fichier = form.cleaned_data.get('fichier')
-            if nouveau_fichier:
-                ressource_maj.taille_fichier = nouveau_fichier.size
-            ressource_maj.save()
+            ressource_maj = form.save()
             messages.success(request, f"✅ La ressource « {ressource_maj.titre} » a été mise à jour avec succès.")
             return redirect('dashboard_formateur')
         else:
