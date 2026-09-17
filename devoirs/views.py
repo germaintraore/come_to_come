@@ -35,7 +35,7 @@ def _verifier_acces_devoir_formateur(user, devoir):
             return True
         if getattr(user, 'formation', None) and devoir.formation == user.formation:
             return True
-        if Formation.objects.filter(code=devoir.formation, formateurs=user).exists():
+        if getattr(user, 'pk', None) and Formation.objects.filter(code=devoir.formation, formateurs=user).exists():
             return True
     return False
 

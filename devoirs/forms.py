@@ -40,7 +40,8 @@ class DevoirForm(forms.ModelForm):
                 pks.add(user.formation_assignee_id)
             if getattr(user, 'formation', None):
                 pks.update(Formation.objects.filter(code=user.formation).values_list('id', flat=True))
-            pks.update(Formation.objects.filter(formateurs=user).values_list('id', flat=True))
+            if getattr(user, 'pk', None):
+                pks.update(Formation.objects.filter(formateurs=user).values_list('id', flat=True))
             formations = list(Formation.objects.filter(id__in=pks))
             if formations:
                 choices = [(f.code, f.nom) for f in formations]
@@ -122,7 +123,8 @@ class DupliquerDevoirForm(forms.ModelForm):
                 pks.add(user.formation_assignee_id)
             if getattr(user, 'formation', None):
                 pks.update(Formation.objects.filter(code=user.formation).values_list('id', flat=True))
-            pks.update(Formation.objects.filter(formateurs=user).values_list('id', flat=True))
+            if getattr(user, 'pk', None):
+                pks.update(Formation.objects.filter(formateurs=user).values_list('id', flat=True))
             formations = list(Formation.objects.filter(id__in=pks))
             if formations:
                 choices = [(f.code, f.nom) for f in formations]
@@ -184,7 +186,8 @@ class RessourceForm(forms.ModelForm):
                 pks.add(formateur.formation_assignee_id)
             if getattr(formateur, 'formation', None):
                 pks.update(Formation.objects.filter(code=formateur.formation).values_list('id', flat=True))
-            pks.update(Formation.objects.filter(formateurs=formateur).values_list('id', flat=True))
+            if getattr(formateur, 'pk', None):
+                pks.update(Formation.objects.filter(formateurs=formateur).values_list('id', flat=True))
 
             formations_list = list(Formation.objects.filter(id__in=pks))
 
@@ -218,9 +221,10 @@ class RessourceForm(forms.ModelForm):
                 codes_autorises.add(self.formateur.formation_assignee.code)
             if getattr(self.formateur, 'formation', None):
                 codes_autorises.add(self.formateur.formation)
-            codes_autorises.update(
-                Formation.objects.filter(formateurs=self.formateur).values_list('code', flat=True)
-            )
+            if getattr(self.formateur, 'pk', None):
+                codes_autorises.update(
+                    Formation.objects.filter(formateurs=self.formateur).values_list('code', flat=True)
+                )
 
             if formation not in codes_autorises:
                 raise forms.ValidationError("Vous n'êtes pas autorisé à publier des ressources pour cette formation.")
