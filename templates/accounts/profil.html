@@ -52,7 +52,12 @@
                     {% if user.avatar_url %}
                     <img id="avatar-preview-header" src="{{ user.avatar_url }}" alt="{{ user.nom_complet }}"
                          class="rounded-circle border border-2 border-primary object-fit-cover shadow"
+                         style="width: 80px; height: 80px;"
+                         onerror="this.style.display='none'; document.getElementById('avatar-fallback-header').classList.remove('d-none');">
+                    <div id="avatar-fallback-header" class="rounded-circle bg-primary bg-opacity-25 text-primary border border-2 border-primary d-flex align-items-center justify-content-center fw-bold fs-3 shadow d-none"
                          style="width: 80px; height: 80px;">
+                        {{ user.prenom|slice:":1"|upper }}{{ user.nom|slice:":1"|upper }}
+                    </div>
                     {% else %}
                     <div id="avatar-fallback-header" class="rounded-circle bg-primary bg-opacity-25 text-primary border border-2 border-primary d-flex align-items-center justify-content-center fw-bold fs-3 shadow"
                          style="width: 80px; height: 80px;">

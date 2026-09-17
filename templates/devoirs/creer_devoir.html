@@ -7,7 +7,6 @@
     <div class="container py-4" style="max-width: 780px;">
 
         <!-- Fil d'ariane -->
-        {% with parent_url=request.user.is_staff|yesno:request.user.is_superuser|yesno:"#,#" current_title="Nouveau Devoir" %}
         <nav aria-label="breadcrumb" class="mb-3">
             <ol class="breadcrumb ctc-breadcrumb py-2 px-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 small mb-0">
                 <li class="breadcrumb-item">
@@ -31,7 +30,6 @@
                 </li>
             </ol>
         </nav>
-        {% endwith %}
 
         <!-- En-tête -->
         <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">

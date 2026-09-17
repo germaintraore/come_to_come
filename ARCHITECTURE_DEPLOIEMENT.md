@@ -229,4 +229,13 @@ Pour reproduire cette architecture sur n'importe quel projet Django :
    - Créer un **Web Service**, lier le dépôt GitHub.
    - **Build Command :** `./build.sh`
    - **Start Command :** `gunicorn config.wsgi:application`
-   - **Environment Variables :** Ajouter `DATABASE_URL`, `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=False`.
+   - **Environment Variables :**
+     - `DATABASE_URL` : Chaîne de connexion Neon avec `?sslmode=require`
+     - `DJANGO_SECRET_KEY` : Clé secrète Django
+     - `DJANGO_DEBUG` : `False`
+     - `CLOUDINARY_URL` *(Capital pour conserver les fichiers et photos lors des mises à jour)* :
+       1. Créez un compte gratuit sur [cloudinary.com](https://cloudinary.com)
+       2. Depuis le tableau de bord Cloudinary (*Dashboard / Programmable Media*), copiez l'**API Environment variable** au format `cloudinary://<api_key>:<api_secret>@<cloud_name>`.
+       3. Ajoutez-la dans Render > **Environment Variables** sous la clé `CLOUDINARY_URL`.
+       4. Dès cet ajout, tous les fichiers téléversés (photos de profil, cours PDF, vidéos) sont automatiquement conservés sur le CDN Cloudinary et **ne disparaissent plus jamais** lors des redéploiements ou mises à jour du serveur !
+

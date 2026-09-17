@@ -117,11 +117,6 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Stockage des fichiers statiques compressés avec Whitenoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    
-
-
 AUTH_USER_MODEL = 'accounts.Apprenant'
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -131,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-DEFAULT_CHARSET='utf-8'
+DEFAULT_CHARSET = 'utf-8'
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'Africa/Ouagadougou'
 USE_I18N = True
@@ -142,26 +137,67 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT_PATH = get_env('MEDIA_ROOT_PATH')
+if MEDIA_ROOT_PATH:
+    MEDIA_ROOT = Path(MEDIA_ROOT_PATH)
+else:
+    MEDIA_ROOT = BASE_DIR / 'media'
+
+# Garantir que le dossier media local existe toujours
+try:
+    os.makedirs(MEDIA_ROOT, exist_ok=True)
+except Exception:
+    pass
 
 # ============================================================
 # STOCKAGE DES FICHIERS (Cloudinary si configuré, sinon local)
 # Sur Render (plan gratuit), le disque local est éphémère.
-# Configurer CLOUDINARY_URL ou CLOUDINARY_CLOUD_NAME permet de
-# conserver définitivement les fichiers médias (PDF, vidéos, avatars).
+# Configurer CLOUDINARY_URL permet de conserver définitivement
+# tous les fichiers médias (PDF, vidéos, photos de profil).
 # ============================================================
 CLOUDINARY_URL = get_env('CLOUDINARY_URL') or os.environ.get('CLOUDINARY_URL')
 CLOUDINARY_CLOUD_NAME = get_env('CLOUDINARY_CLOUD_NAME') or os.environ.get('CLOUDINARY_CLOUD_NAME')
 
 if CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME:
+    # cloudinary_storage doit impérativement précéder django.contrib.staticfiles
     if 'cloudinary_storage' not in INSTALLED_APPS:
-        INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': get_env('CLOUDINARY_CLOUD_NAME', ''),
-        'API_KEY': get_env('CLOUDINARY_API_KEY', ''),
-        'API_SECRET': get_env('CLOUDINARY_API_SECRET', ''),
+        idx = INSTALLED_APPS.index('django.contrib.staticfiles') if 'django.contrib.staticfiles' in INSTALLED_APPS else 0
+        INSTALLED_APPS.insert(idx, 'cloudinary_storage')
+        INSTALLED_APPS.append('cloudinary')
+
+    if CLOUDINARY_URL:
+        os.environ['CLOUDINARY_URL'] = CLOUDINARY_URL
+        CLOUDINARY_STORAGE = {
+            'CLOUDINARY_URL': CLOUDINARY_URL,
+        }
+    else:
+        CLOUDINARY_STORAGE = {
+            'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+            'API_KEY': get_env('CLOUDINARY_API_KEY', ''),
+            'API_SECRET': get_env('CLOUDINARY_API_SECRET', ''),
+        }
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "config.storage_backends.DynamicMediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
     }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    DEFAULT_FILE_STORAGE = 'config.storage_backends.DynamicMediaCloudinaryStorage'
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

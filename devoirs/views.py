@@ -31,7 +31,12 @@ def _verifier_acces_devoir_formateur(user, devoir):
     if user.is_staff or user.is_superuser:
         return True
     if user.is_formateur:
-        return bool(user.formation_assignee and devoir.formation == user.formation_assignee.code)
+        if user.formation_assignee and devoir.formation == user.formation_assignee.code:
+            return True
+        if getattr(user, 'formation', None) and devoir.formation == user.formation:
+            return True
+        if Formation.objects.filter(code=devoir.formation, formateurs=user).exists():
+            return True
     return False
 
 

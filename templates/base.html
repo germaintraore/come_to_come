@@ -98,7 +98,8 @@
                             <a class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2"
                                href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 {% if user.avatar_url %}
-                                <img src="{{ user.avatar_url }}" alt="{{ user.prenom }}" class="rounded-circle object-fit-cover border border-1 border-primary" style="width: 24px; height: 24px;">
+                                <img src="{{ user.avatar_url }}" alt="{{ user.prenom }}" class="rounded-circle object-fit-cover border border-1 border-primary" style="width: 24px; height: 24px;" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                                <i class="bi bi-person-circle fs-6 d-none"></i>
                                 {% else %}
                                 <i class="bi bi-person-circle fs-6"></i>
                                 {% endif %}
